@@ -59,7 +59,8 @@ public class EntityLathe extends EntityMultiblockMaster {
         this.alwaysOpenMasterGui = true; // makes the master gui open no matter what block of the multiblock is clicked
         recipeManager.recipes = EntityLathe.recipes; // copy static loaded recipes to the manager
 
-        // create the guiHandler
+        // create the guiHandler - this is only to prevent nullpointer when readClient or readServer or tick is called
+        // it is just a placeholder for now
         // we fill modules only when the structure is complete
         // because we need access to the item/fluid blocks and
         // we only get this after the structure is completed
@@ -71,10 +72,8 @@ public class EntityLathe extends EntityMultiblockMaster {
     // this usually happens when the master block is clicked && the multiblock is not complete
     // it will also be called onLoad() if the structure is scanned & completed OR on client side, if the structure is completed (blockstate value checked)
     public void onStructureComplete() {
-        // do not create new guihandler instance, this will fuck it all up.
-        // use .clearModules() to remove all modules
-        guiHandler.clearModules();
-
+        // create a empty guiHandler
+        guiHandler = new GuiHandlerBlockEntity(this);
 
         // client has no idea about the input/output tiles. only server needs to know them
         // they are not needed on the client side of the gui. do not try to access the tiles on the clientside, they do not exist here
