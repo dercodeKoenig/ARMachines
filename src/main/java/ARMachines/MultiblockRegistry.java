@@ -1,5 +1,6 @@
 package ARMachines;
 
+import ARMachines.holoProjector.itemHoloProjector;
 import ARMachines.lathe.BlockLathe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.lathe.RenderLathe;
@@ -37,6 +38,10 @@ public class MultiblockRegistry {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
     }
+
+    public static final DeferredHolder<Item, Item> ITEM_HOLOPROJECTOR = ITEMS.register("item_holor_projector",
+            () -> new itemHoloProjector(new Item.Properties()));
+
 
     public static void register(IEventBus modBus) {
         registerBlockItem("block_lathe", BLOCK_LATHE);

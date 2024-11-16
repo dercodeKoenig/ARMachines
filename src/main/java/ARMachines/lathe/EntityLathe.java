@@ -21,10 +21,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-import static ARLib.ARLibRegistry.BLOCK_MOTOR;
-import static ARLib.ARLibRegistry.BLOCK_STRUCTURE;
+import static ARLib.ARLibRegistry.*;
 import static ARMachines.MultiblockRegistry.BLOCK_LATHE;
 import static ARMachines.MultiblockRegistry.ENTITY_LATHE;
 
@@ -32,10 +32,49 @@ public class EntityLathe extends EntityMultiblockMaster {
 
 
     static List<MachineRecipe> recipes = new ArrayList<>();
-
     public static void addRecipe(MachineRecipe recipe) {
         recipes.add(recipe);
     }
+
+
+    // defines what blocks are valid for a char in the structure
+    static HashMap<Character, List<Block>> charMapping = new HashMap<>();
+    // structure is defined by char / Block objects. char objects can have multiple valid blocks
+    // "c" is ALWAYS used for the controller/master block.
+    static Object[][][] structure = {
+            {{'c', BLOCK_MOTOR.get(), Blocks.AIR, 'I'}},
+            {{'P', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}},
+    };
+    // setup all the blocks that can be used for a char in the structure
+    // I is item input, O is item output, P is power input
+    static {
+        // "c" is ALWAYS used for the controller/master block.
+        List<Block> c = new ArrayList<>();
+        c.add(BLOCK_LATHE.get());
+        charMapping.put('c', c);
+
+        List<Block> I = new ArrayList<>();
+        I.add(BLOCK_ITEM_INPUT_BLOCK.get());
+        charMapping.put('I', I);
+
+        List<Block> O = new ArrayList<>();
+        O.add(BLOCK_ITEM_OUTPUT_BLOCK.get());
+        charMapping.put('O', O);
+
+        List<Block> P = new ArrayList<>();
+        P.add(BLOCK_ENERGY_INPUT_BLOCK.get());
+        charMapping.put('P', P);
+    }
+    @Override
+    public Object[][][] getStructure() {
+        return structure;
+    }
+    @Override
+    public HashMap<Character, List<Block>> getCharMapping(){
+        return charMapping;
+    }
+
+
 
     // this is used for gui
     IGuiHandler guiHandler;
@@ -146,27 +185,6 @@ public class EntityLathe extends EntityMultiblockMaster {
         }
     }
 
-    @Override
-    // setup all the blocks that can be used for a char in the structure
-    public void setupCharmappings() {
-        super.setupCharmappings();
-        List<Block> c = new ArrayList<>();
-        c.add(BLOCK_LATHE.get());
-        setMapping('c', c);
-    }
-
-    // structure is defined by char / Block objects. char objects can have multiple valid blocks
-    // "c" is used for the controller/master block.
-    // I is item input, O is item output, P is power input
-    public static final Object[][][] structure = {
-            {{'c', BLOCK_MOTOR.get(), Blocks.AIR, 'I'}},
-            {{'P', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}},
-    };
-
-    @Override
-    public Object[][][] getStructure() {
-        return structure;
-    }
 
     // I want the gui only to open when the structure is formed and always only on client side
     public void openGui() {
