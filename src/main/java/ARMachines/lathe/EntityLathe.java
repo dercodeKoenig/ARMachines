@@ -38,10 +38,10 @@ public class EntityLathe extends EntityMultiblockMaster {
 
 
     // defines what blocks are valid for a char in the structure
-    static HashMap<Character, List<Block>> charMapping = new HashMap<>();
+    public static HashMap<Character, List<Block>> charMapping = new HashMap<>();
     // structure is defined by char / Block objects. char objects can have multiple valid blocks
     // "c" is ALWAYS used for the controller/master block.
-    static Object[][][] structure = {
+    public     static Object[][][] structure = {
             {{'c', BLOCK_MOTOR.get(), Blocks.AIR, 'I'}},
             {{'P', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}},
     };
@@ -66,11 +66,11 @@ public class EntityLathe extends EntityMultiblockMaster {
         charMapping.put('P', P);
     }
     @Override
-    public Object[][][] getStructure() {
+    public  Object[][][] getStructure() {
         return structure;
     }
     @Override
-    public HashMap<Character, List<Block>> getCharMapping(){
+    public  HashMap<Character, List<Block>> getCharMapping(){
         return charMapping;
     }
 

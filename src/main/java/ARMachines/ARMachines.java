@@ -1,9 +1,12 @@
 package ARMachines;
 
+import ARLib.multiblockCore.EntityMultiblockMaster;
 import ARLib.utils.MachineRecipe;
 import ARLib.utils.RecipeLoader;
+import ARMachines.holoProjector.itemHoloProjector;
 import ARMachines.lathe.EntityLathe;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -14,6 +17,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Mod(ARMachines.MODID)
@@ -29,6 +33,8 @@ public class ARMachines
         modEventBus.addListener(this::registerEntityRenderers);
 
         MultiblockRegistry.register(modEventBus);
+
+
     }
 
     public  void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -42,6 +48,13 @@ public class ARMachines
 
     private void loadComplete(FMLLoadCompleteEvent e){
 
+
+        Object[][][] structure = EntityLathe.structure;
+        HashMap<Character, List<Block>> charMapping = EntityLathe.charMapping;
+
+        itemHoloProjector.registerMultiblock("lathe", structure, charMapping);
+
+
         List<MachineRecipe> latheDefaultRecipes = new ArrayList<>();
         MachineRecipe r = new MachineRecipe();
         r.addInput("c:ingots/iron", 1);
@@ -54,7 +67,7 @@ public class ARMachines
         String filename = "lathe.xml";
         List<MachineRecipe> recipesLathe =  RecipeLoader.loadRecipes(configDir,filename);
         if (recipesLathe.isEmpty()){
-            RecipeLoader.createRecipeFile(configDir,filename,latheDefaultRecipes);
+            RecipeLoader.createRecipeFile(configDir,"example_"+filename,latheDefaultRecipes);
             recipesLathe = latheDefaultRecipes;
         }
         for (MachineRecipe i : recipesLathe) {
