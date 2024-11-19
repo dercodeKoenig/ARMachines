@@ -1,9 +1,9 @@
 package ARMachines;
 
+import ARLib.holoProjector.itemHoloProjector;
 import ARLib.multiblockCore.EntityMultiblockMaster;
 import ARLib.utils.MachineRecipe;
 import ARLib.utils.RecipeLoader;
-import ARMachines.holoProjector.itemHoloProjector;
 import ARMachines.lathe.EntityLathe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.Block;

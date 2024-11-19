@@ -1,6 +1,6 @@
 package ARMachines;
 
-import ARMachines.holoProjector.itemHoloProjector;
+
 import ARMachines.lathe.BlockLathe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.lathe.RenderLathe;
@@ -35,12 +35,6 @@ public class MultiblockRegistry {
             () -> BlockEntityType.Builder.of(EntityLathe::new, BLOCK_LATHE.get()).build(null)
     );
 
-    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
-    }
-
-    public static final DeferredHolder<Item, Item> ITEM_HOLOPROJECTOR = ITEMS.register("item_holor_projector",
-            () -> new itemHoloProjector(new Item.Properties()));
 
 
     public static void register(IEventBus modBus) {
@@ -49,6 +43,10 @@ public class MultiblockRegistry {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
+    }
+
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
     }
 
     public static void addCreative(BuildCreativeModeTabContentsEvent e){
