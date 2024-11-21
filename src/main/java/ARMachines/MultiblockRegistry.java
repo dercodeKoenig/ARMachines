@@ -4,6 +4,9 @@ package ARMachines;
 import ARMachines.lathe.BlockLathe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.lathe.RenderLathe;
+import ARMachines.rollingMachine.BlockRollingMachine;
+import ARMachines.rollingMachine.EntityRollingMachine;
+import ARMachines.rollingMachine.RenderRollingMachine;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -36,9 +39,21 @@ public class MultiblockRegistry {
     );
 
 
+    // rolling machine
+    public static final DeferredHolder<Block, Block> BLOCK_ROLLINGMACHINE = BLOCKS.register(
+            "block_rollingmachine",
+            () -> new BlockRollingMachine(BlockBehaviour.Properties.of())
+    );
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EntityRollingMachine>> ENTITY_ROLLINGMACHINE = BLOCK_ENTITIES.register(
+            "entity_rollingmachine",
+            () -> BlockEntityType.Builder.of(EntityRollingMachine::new, BLOCK_ROLLINGMACHINE.get()).build(null)
+    );
+
+
 
     public static void register(IEventBus modBus) {
         registerBlockItem("block_lathe", BLOCK_LATHE);
+        registerBlockItem("block_rollingmachine", BLOCK_ROLLINGMACHINE);
 
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
@@ -47,11 +62,13 @@ public class MultiblockRegistry {
 
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
+        event.registerBlockEntityRenderer(ENTITY_ROLLINGMACHINE.get(), RenderRollingMachine::new);
     }
 
     public static void addCreative(BuildCreativeModeTabContentsEvent e){
         if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS){
             e.accept(BLOCK_LATHE.get());
+            e.accept(BLOCK_ROLLINGMACHINE.get());
         }
     }
 }

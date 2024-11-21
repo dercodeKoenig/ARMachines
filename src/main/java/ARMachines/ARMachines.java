@@ -5,6 +5,7 @@ import ARLib.multiblockCore.EntityMultiblockMaster;
 import ARLib.utils.MachineRecipe;
 import ARLib.utils.RecipeLoader;
 import ARMachines.lathe.EntityLathe;
+import ARMachines.rollingMachine.EntityRollingMachine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
@@ -49,10 +50,8 @@ public class ARMachines
     private void loadComplete(FMLLoadCompleteEvent e){
 
 
-        Object[][][] structure = EntityLathe.structure;
-        HashMap<Character, List<Block>> charMapping = EntityLathe.charMapping;
-
-        itemHoloProjector.registerMultiblock("lathe", structure, charMapping);
+        itemHoloProjector.registerMultiblock("Lathe", EntityLathe.structure, EntityLathe.charMapping);
+        itemHoloProjector.registerMultiblock("Rolling Machine", EntityRollingMachine.structure, EntityRollingMachine.charMapping);
 
 
         List<MachineRecipe> latheDefaultRecipes = new ArrayList<>();
@@ -72,6 +71,7 @@ public class ARMachines
         }
         for (MachineRecipe i : recipesLathe) {
             EntityLathe.addRecipe(i);
+            EntityRollingMachine.addRecipe(i);
         }
     }
     }

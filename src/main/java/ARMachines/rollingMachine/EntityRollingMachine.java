@@ -1,6 +1,7 @@
-package ARMachines.lathe;
+package ARMachines.rollingMachine;
 
 
+import ARLib.ARLib;
 import ARLib.gui.GuiHandlerBlockEntity;
 import ARLib.gui.IGuiHandler;
 import ARLib.gui.modules.*;
@@ -12,11 +13,12 @@ import ARLib.obj.WavefrontObject;
 import ARLib.utils.MachineRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -32,10 +34,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static ARLib.ARLibRegistry.*;
-import static ARMachines.MultiblockRegistry.BLOCK_LATHE;
-import static ARMachines.MultiblockRegistry.ENTITY_LATHE;
+import static ARMachines.MultiblockRegistry.*;
 
-public class EntityLathe extends EntityMultiblockMaster {
+public class EntityRollingMachine extends EntityMultiblockMaster {
 
 
     static List<MachineRecipe> recipes = new ArrayList<>();
@@ -49,20 +50,34 @@ public class EntityLathe extends EntityMultiblockMaster {
     // structure is defined by char / Block objects. char objects can have multiple valid blocks
     // "c" is ALWAYS used for the controller/master block.
     public     static Object[][][] structure = {
-            {{'c', BLOCK_MOTOR.get(), Blocks.AIR, 'I'}},
-            {{'P', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}},
+            {{'c', null, Blocks.AIR, Blocks.AIR},
+                    {'I', Blocks.AIR, BLOCK_STRUCTURE.get(), Blocks.AIR},
+                    {'I', Blocks.AIR, BLOCK_STRUCTURE.get(), Blocks.AIR}},
+
+            {{'P', 'i', BLOCK_STRUCTURE.get(), null},
+                    {'C', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'},
+                    {'C', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}}
     };
+
     // setup all the blocks that can be used for a char in the structure
     // I is item input, O is item output, P is power input
     static {
         // "c" is ALWAYS used for the controller/master block.
         List<Block> c = new ArrayList<>();
-        c.add(BLOCK_LATHE.get());
+        c.add(BLOCK_ROLLINGMACHINE.get());
         charMapping.put('c', c);
+
+        List<Block> C = new ArrayList<>();
+        C.add(BLOCK_COIL_COPPER.get());
+        charMapping.put('C', C);
 
         List<Block> I = new ArrayList<>();
         I.add(BLOCK_ITEM_INPUT_BLOCK.get());
         charMapping.put('I', I);
+
+        List<Block> i = new ArrayList<>();
+        i.add(BLOCK_FLUID_INPUT_BLOCK.get());
+        charMapping.put('i', i);
 
         List<Block> O = new ArrayList<>();
         O.add(BLOCK_ITEM_OUTPUT_BLOCK.get());
@@ -87,7 +102,7 @@ public class EntityLathe extends EntityMultiblockMaster {
     IGuiHandler guiHandler;
 
     // this is used for simple recipe management - you dont need to worry about recipe logic
-    public MultiblockRecipeManager<EntityLathe> recipeManager = new MultiblockRecipeManager<>(this);
+    public MultiblockRecipeManager<EntityRollingMachine> recipeManager = new MultiblockRecipeManager<>(this);
 
     // self explaining
     boolean isRunning;
@@ -97,14 +112,15 @@ public class EntityLathe extends EntityMultiblockMaster {
     int client_recipeMaxTime = 1;
     int client_recipeProgress = 0;
     boolean client_hasRecipe = false;
-WavefrontObject model;
+
     // this gui module is not sync-able, it uses a set() method to set the value so we need to keep an instance of it
     guiModuleProgressBarHorizontal6px progressBar6px;
 
-    public EntityLathe(BlockPos pos, BlockState state) {
-        super(ENTITY_LATHE.get(), pos, state);
+    WavefrontObject model;
+    public EntityRollingMachine(BlockPos pos, BlockState state) {
+        super(ENTITY_ROLLINGMACHINE.get(), pos, state);
         this.alwaysOpenMasterGui = true; // makes the master gui open no matter what block of the multiblock is clicked
-        recipeManager.recipes = EntityLathe.recipes; // copy static loaded recipes to the manager
+        recipeManager.recipes = EntityRollingMachine.recipes; // copy static loaded recipes to the manager
 
         // create the guiHandler - this is only to prevent nullpointer when readClient or readServer or tick is called
         // it is just a placeholder for now
@@ -113,63 +129,37 @@ WavefrontObject model;
         // we only get this after the structure is completed
         guiHandler = new GuiHandlerBlockEntity(this);
 
-        ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/lathe.obj");
+        ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.obj");
         try {
             model = new WavefrontObject(modelsrc);
         } catch (ModelFormatException e) {
             throw new RuntimeException(e);
-        }
+        };
     }
 
+    BlockState coil1 = Blocks.AIR.defaultBlockState();
+    BlockState coil2 = Blocks.AIR.defaultBlockState();
     @Override
-    // this method will be called if the structure goes from incomplete to completes.
-    // this usually happens when the master block is clicked && the multiblock is not complete
-    // it will also be called onLoad() if the structure is scanned & completed OR on client side, if the structure is completed (blockstate value checked)
     public void onStructureComplete() {
         // create a empty guiHandler
         guiHandler = new GuiHandlerBlockEntity(this);
 
-        // client has no idea about the input/output tiles. only server needs to know them
-        // they are not needed on the client side of the gui. do not try to access the tiles on the clientside, they do not exist here
+        Object[][][] structure = getStructure();
+        Direction front = getFront();
+        if (front == null) return;
+        Vec3i offset = getControllerOffset(structure);
 
-        // 4 slots for the input block
-        // every sot has a groupId and a instantTransferId - this way you can specify what slots will be targeted on instant-item-transfer during shift click
-        guiModuleItemHandlerSlot slotI1 = new guiModuleItemHandlerSlot(1, level.isClientSide ? null : this.itemInTiles.get(0), 0, 1, 0, guiHandler, 50, 10);
-        guiModuleItemHandlerSlot slotI2 = new guiModuleItemHandlerSlot(2, level.isClientSide ? null : this.itemInTiles.get(0), 1, 1, 0, guiHandler, 50, 30);
-        guiModuleItemHandlerSlot slotI3 = new guiModuleItemHandlerSlot(3, level.isClientSide ? null : this.itemInTiles.get(0), 2, 1, 0, guiHandler, 70, 10);
-        guiModuleItemHandlerSlot slotI4 = new guiModuleItemHandlerSlot(4, level.isClientSide ? null : this.itemInTiles.get(0), 3, 1, 0, guiHandler, 70, 30);
-        guiHandler.registerModule(slotI1);
-        guiHandler.registerModule(slotI2);
-        guiHandler.registerModule(slotI3);
-        guiHandler.registerModule(slotI4);
+        int globalX1 = getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (1 - offset.getZ()) * front.getStepX();
+        int globalY1 = getBlockPos().getY() - 1 + offset.getY();
+        int globalZ1 = getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (1 - offset.getZ()) * front.getStepZ();
+        BlockPos globalPos1 = new BlockPos(globalX1, globalY1, globalZ1);
+        coil1 = level.getBlockState(globalPos1);
 
-        // 4 slots for the output block
-        guiModuleItemHandlerSlot slotO1 = new guiModuleItemHandlerSlot(5, level.isClientSide ? null : this.itemOutTiles.get(0), 0, 2, 0, guiHandler, 130, 10);
-        guiModuleItemHandlerSlot slotO2 = new guiModuleItemHandlerSlot(6, level.isClientSide ? null : this.itemOutTiles.get(0), 1, 2, 0, guiHandler, 130, 30);
-        guiModuleItemHandlerSlot slotO3 = new guiModuleItemHandlerSlot(7, level.isClientSide ? null : this.itemOutTiles.get(0), 2, 2, 0, guiHandler, 110, 10);
-        guiModuleItemHandlerSlot slotO4 = new guiModuleItemHandlerSlot(8, level.isClientSide ? null : this.itemOutTiles.get(0), 3, 2, 0, guiHandler, 110, 30);
-        guiHandler.registerModule(slotO1);
-        guiHandler.registerModule(slotO2);
-        guiHandler.registerModule(slotO3);
-        guiHandler.registerModule(slotO4);
-
-        guiModuleEnergy energyBar = new guiModuleEnergy(9, level.isClientSide ? null : this.energyInTiles.get(0), guiHandler, 10, 10);
-        guiHandler.registerModule(energyBar);
-
-        // create the hotbar slots first, inventory-instant-item-transfer will try slots by the order they were registered
-        List<guiModulePlayerInventorySlot> playerHotBar = guiModulePlayerInventorySlot.makePlayerHotbarModules(7, 140, 100, 0, 1, this.guiHandler);
-        for (guiModulePlayerInventorySlot i : playerHotBar)
-            guiHandler.registerModule(i);
-
-        List<guiModulePlayerInventorySlot> playerInventory = guiModulePlayerInventorySlot.makePlayerInventoryModules(7, 70, 200, 0, 1, this.guiHandler);
-        for (guiModulePlayerInventorySlot i : playerInventory)
-            guiHandler.registerModule(i);
-
-
-        progressBar6px = new guiModuleProgressBarHorizontal6px(-1, 0xFFF0F0F0, guiHandler, 60, 55);
-        guiHandler.registerModule(progressBar6px);
-
-        guiHandler.registerModule(new guiModuleImage(guiHandler, 90, 20, 16, 12, ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_right.png"), 16, 12));
+        int globalX2 = getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (2 - offset.getZ()) * front.getStepX();
+        int globalY2 = getBlockPos().getY() - 1 + offset.getY();
+        int globalZ2 = getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (2 - offset.getZ()) * front.getStepZ();
+        BlockPos globalPos2 = new BlockPos(globalX2, globalY2, globalZ2);
+        coil2 = level.getBlockState(globalPos2);
     }
 
     @Override
@@ -264,7 +254,7 @@ WavefrontObject model;
 
     // this is the tick method
     public static <x extends BlockEntity> void tick(Level level, BlockPos blockPos, BlockState blockState, x t) {
-        EntityLathe t1 = (EntityLathe) t;
+        EntityRollingMachine t1 = (EntityRollingMachine) t;
         if (!level.isClientSide) {
             // update the guiHandler, it checks if anything has changed in the gui and sends changes to the clients tracking the gui
             IGuiHandler.serverTick(t1.guiHandler);
@@ -281,7 +271,7 @@ WavefrontObject model;
             if (t1.isRunning) {
                 // on client side, also update the progress.
                 t1.client_recipeProgress++;
-                t1.progressBar6px.setProgress((double) t1.client_recipeProgress / t1.client_recipeMaxTime);
+//                t1.progressBar6px.setProgress((double) t1.client_recipeProgress / t1.client_recipeMaxTime);
                 if (t1.client_recipeProgress >= t1.client_recipeMaxTime) {
                     t1.isRunning = false;
                 }

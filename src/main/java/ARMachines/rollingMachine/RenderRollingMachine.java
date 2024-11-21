@@ -1,10 +1,11 @@
-package ARMachines.lathe;
+package ARMachines.rollingMachine;
 
 
 import ARLib.obj.ModelFormatException;
 import ARLib.obj.WavefrontObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -19,11 +20,10 @@ import org.joml.Vector3f;
 import static ARLib.obj.GroupObject.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
 import static net.minecraft.client.renderer.RenderStateShard.*;
 
-public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
+public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMachine> {
 
-    ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/lathe.png");
+    ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.png");
 
-    WavefrontObject model;
 
     public int getViewDistance() {
         return 256;
@@ -31,12 +31,12 @@ public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
 
     @NotNull
     @Override
-    public AABB getRenderBoundingBox(EntityLathe blockEntity) {
+    public AABB getRenderBoundingBox(EntityRollingMachine blockEntity) {
         return new AABB(blockEntity.getBlockPos()).inflate(100);
     }
 
 
-    public RenderLathe(BlockEntityRendererProvider.Context context) {
+    public RenderRollingMachine(BlockEntityRendererProvider.Context context) {
 
     }
 
@@ -48,7 +48,7 @@ public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
     // - packedLight:   The light value of the block entity.
     // - packedOverlay: The current overlay value of the block entity, usually OverlayTexture.NO_OVERLAY.
     @Override
-    public void render(EntityLathe tile, float partialTick, PoseStack stack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+    public void render(EntityRollingMachine tile, float partialTick, PoseStack stack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
 
@@ -60,24 +60,25 @@ WavefrontObject model = tile.model;
             float angle = 0;
             switch (facing) {
                 case NORTH:
-                    angle = 90;
-                    break;
-                case EAST:
-                    angle = 0;
-                    break;
-                case SOUTH:
                     angle = 270;
                     break;
+                case EAST:
+                    angle = 280;
+                    break;
+                case SOUTH:
+                    angle = 90;
+                    break;
                 case WEST:
-                    angle = 180;
+                    angle = 0;
                     break;
             }
             angle = (float) Math.toRadians(angle);
             Quaternionf quaternion = new Quaternionf().fromAxisAngleRad(axis, angle);
             stack.rotateAround(quaternion, 0.5f, 0, 0.5f);
-            // move so that the model aligns with the structure
-            stack.translate(0, -1, -2);
 
+            stack.pushPose();
+            // move so that the model aligns with the structure
+            stack.translate(0, -1, 0);
             VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
             RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
@@ -89,7 +90,6 @@ WavefrontObject model = tile.model;
 
             model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
-            stack.pushPose();
             int progress = tile.client_recipeProgress;
             int maxTime = tile.client_recipeMaxTime;
             double maxTime_I = (double) 1 / maxTime;
@@ -98,26 +98,31 @@ WavefrontObject model = tile.model;
                 partial_add = partialTick * maxTime_I;
             double relativeProgress = progress * maxTime_I + partial_add;
 
-            double maxTranslate = -1.1;
-            double translation = relativeProgress;
-            if (translation > 0.5) translation = 1 - translation;
 
-            stack.translate(0, 0,   maxTranslate * translation*2    );
+            Vector3f a = new Vector3f(1, 0, 0);
+            stack.translate(2.14, 0.4, 2.2);
+
+            model.setRotationForPart("Roller2",new Vector3f(0,0,0),a,(float)relativeProgress*360*3);
+            model.renderPart("Roller2", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
 
-            model.renderPart("Tool", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+            stack.translate(0, 0, 0.75);
+            model.setRotationForPart("Roller3",new Vector3f(0,0,0),a,(float)relativeProgress*360*3);
+            model.renderPart("Roller3", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+            stack.translate(0, 0.6, -0.36);
+            model.setRotationForPart("Roller1",new Vector3f(0,0,0),a,(float)-relativeProgress*360*3);
+            model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
             stack.popPose();
-
-
-            if (tile.client_hasRecipe) {
-                stack.pushPose();
-                stack.translate(0.38, 1.19, 0);
-                model.setRotationForPart("Shaft", new Vector3f(0,0,0), new Vector3f(0,0,1),(float)relativeProgress*360*2f);
-                //model.setRotationForPart("Shaft", new Vector3f(0,0,0), new Vector3f(0,0,1),(float)0);
-                model.renderPart("Shaft", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-                stack.popPose();
-            }
-
+            stack.pushPose();
+            stack.translate(1, -1, 0);
+            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1,stack,bufferSource,packedLight,packedOverlay);
+            stack.translate(1, 0, 0);
+            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2,stack,bufferSource,packedLight,packedOverlay);
+            stack.popPose();
             stack.popPose();
         }
     }
