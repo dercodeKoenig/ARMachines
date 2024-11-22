@@ -117,7 +117,7 @@ WavefrontObject model;
         try {
          model = new WavefrontObject(modelsrc);
             // dont ask me why but the rotation is always messed up if i not set it initially to 0 here...
-            model.setRotationForPart("Shaft",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
+            //model.setRotationForPart("Shaft",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
         } catch (ModelFormatException e) {
             throw new RuntimeException(e);
         }
