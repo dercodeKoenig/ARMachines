@@ -49,6 +49,7 @@ public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
     // - packedOverlay: The current overlay value of the block entity, usually OverlayTexture.NO_OVERLAY.
     @Override
     public void render(EntityLathe tile, float partialTick, PoseStack stack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+
 WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
 

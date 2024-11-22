@@ -5,20 +5,26 @@ import ARLib.ARLib;
 import ARLib.gui.GuiHandlerBlockEntity;
 import ARLib.gui.IGuiHandler;
 import ARLib.gui.modules.*;
+import ARLib.multiblockCore.BlockMultiblockPlaceholder;
 import ARLib.multiblockCore.EntityMultiblockMaster;
+import ARLib.multiblockCore.EntityMultiblockPlaceholder;
 import ARLib.multiblockCore.MultiblockRecipeManager;
 import ARLib.network.PacketBlockEntity;
 import ARLib.obj.ModelFormatException;
 import ARLib.obj.WavefrontObject;
+import ARLib.utils.ItemFluidStacks;
 import ARLib.utils.MachineRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +33,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,12 +41,14 @@ import java.util.List;
 import java.util.UUID;
 
 import static ARLib.ARLibRegistry.*;
+import static ARLib.utils.ItemUtils.getItemStackFromId;
 import static ARMachines.MultiblockRegistry.*;
 
 public class EntityRollingMachine extends EntityMultiblockMaster {
 
 
     static List<MachineRecipe> recipes = new ArrayList<>();
+
     public static void addRecipe(MachineRecipe recipe) {
         recipes.add(recipe);
     }
@@ -49,7 +58,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
     public static HashMap<Character, List<Block>> charMapping = new HashMap<>();
     // structure is defined by char / Block objects. char objects can have multiple valid blocks
     // "c" is ALWAYS used for the controller/master block.
-    public     static Object[][][] structure = {
+    public static Object[][][] structure = {
             {{'c', null, Blocks.AIR, Blocks.AIR},
                     {'I', Blocks.AIR, BLOCK_STRUCTURE.get(), Blocks.AIR},
                     {'I', Blocks.AIR, BLOCK_STRUCTURE.get(), Blocks.AIR}},
@@ -87,15 +96,16 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         P.add(BLOCK_ENERGY_INPUT_BLOCK.get());
         charMapping.put('P', P);
     }
+
     @Override
-    public  Object[][][] getStructure() {
+    public Object[][][] getStructure() {
         return structure;
     }
+
     @Override
-    public  HashMap<Character, List<Block>> getCharMapping(){
+    public HashMap<Character, List<Block>> getCharMapping() {
         return charMapping;
     }
-
 
 
     // this is used for gui
@@ -112,11 +122,14 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
     int client_recipeMaxTime = 1;
     int client_recipeProgress = 0;
     boolean client_hasRecipe = false;
+    ItemFluidStacks client_nextConsumedStacks = new ItemFluidStacks();
+    List<ItemStack> client_nextOutputs = new ArrayList<>();
 
     // this gui module is not sync-able, it uses a set() method to set the value so we need to keep an instance of it
     guiModuleProgressBarHorizontal6px progressBar6px;
 
     WavefrontObject model;
+
     public EntityRollingMachine(BlockPos pos, BlockState state) {
         super(ENTITY_ROLLINGMACHINE.get(), pos, state);
         this.alwaysOpenMasterGui = true; // makes the master gui open no matter what block of the multiblock is clicked
@@ -132,34 +145,78 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.obj");
         try {
             model = new WavefrontObject(modelsrc);
+            // dont ask me why but the rotation is always messed up if i not set it initially to 0 here...
+            model.setRotationForPart("Roller1",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
+            model.setRotationForPart("Roller2",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
+            model.setRotationForPart("Roller3",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
         } catch (ModelFormatException e) {
             throw new RuntimeException(e);
-        };
+        }
     }
 
     BlockState coil1 = Blocks.AIR.defaultBlockState();
     BlockState coil2 = Blocks.AIR.defaultBlockState();
+
     @Override
     public void onStructureComplete() {
         // create a empty guiHandler
         guiHandler = new GuiHandlerBlockEntity(this);
 
-        Object[][][] structure = getStructure();
-        Direction front = getFront();
-        if (front == null) return;
-        Vec3i offset = getControllerOffset(structure);
+        // 8 slots for the input block
+        // every sot has a groupId and a instantTransferId - this way you can specify what slots will be targeted on instant-item-transfer during shift click
+        guiModuleItemHandlerSlot slotI1 = new guiModuleItemHandlerSlot(1, level.isClientSide ? null : this.itemInTiles.get(0), 0, 1, 0, guiHandler, 30, 10);
+        guiModuleItemHandlerSlot slotI2 = new guiModuleItemHandlerSlot(2, level.isClientSide ? null : this.itemInTiles.get(0), 1, 1, 0, guiHandler, 30, 30);
+        guiModuleItemHandlerSlot slotI3 = new guiModuleItemHandlerSlot(3, level.isClientSide ? null : this.itemInTiles.get(0), 2, 1, 0, guiHandler, 50, 10);
+        guiModuleItemHandlerSlot slotI4 = new guiModuleItemHandlerSlot(4, level.isClientSide ? null : this.itemInTiles.get(0), 3, 1, 0, guiHandler, 50, 30);
+        guiHandler.registerModule(slotI1);
+        guiHandler.registerModule(slotI2);
+        guiHandler.registerModule(slotI3);
+        guiHandler.registerModule(slotI4);
+        guiModuleItemHandlerSlot slotI5 = new guiModuleItemHandlerSlot(5, level.isClientSide ? null : this.itemInTiles.get(1), 0, 1, 0, guiHandler, 70, 10);
+        guiModuleItemHandlerSlot slotI6 = new guiModuleItemHandlerSlot(6, level.isClientSide ? null : this.itemInTiles.get(1), 1, 1, 0, guiHandler, 70, 30);
+        guiModuleItemHandlerSlot slotI7 = new guiModuleItemHandlerSlot(7, level.isClientSide ? null : this.itemInTiles.get(1), 2, 1, 0, guiHandler, 90, 10);
+        guiModuleItemHandlerSlot slotI8 = new guiModuleItemHandlerSlot(8, level.isClientSide ? null : this.itemInTiles.get(1), 3, 1, 0, guiHandler, 90, 30);
+        guiHandler.registerModule(slotI5);
+        guiHandler.registerModule(slotI6);
+        guiHandler.registerModule(slotI7);
+        guiHandler.registerModule(slotI8);
 
-        int globalX1 = getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (1 - offset.getZ()) * front.getStepX();
-        int globalY1 = getBlockPos().getY() - 1 + offset.getY();
-        int globalZ1 = getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (1 - offset.getZ()) * front.getStepZ();
-        BlockPos globalPos1 = new BlockPos(globalX1, globalY1, globalZ1);
-        coil1 = level.getBlockState(globalPos1);
+        // 8 slots for the output block
+        guiModuleItemHandlerSlot slotO1 = new guiModuleItemHandlerSlot(9, level.isClientSide ? null : this.itemOutTiles.get(0), 0, 2, 0, guiHandler, 150, 10);
+        guiModuleItemHandlerSlot slotO2 = new guiModuleItemHandlerSlot(10, level.isClientSide ? null : this.itemOutTiles.get(0), 1, 2, 0, guiHandler, 150, 30);
+        guiModuleItemHandlerSlot slotO3 = new guiModuleItemHandlerSlot(11, level.isClientSide ? null : this.itemOutTiles.get(0), 2, 2, 0, guiHandler, 130, 10);
+        guiModuleItemHandlerSlot slotO4 = new guiModuleItemHandlerSlot(12, level.isClientSide ? null : this.itemOutTiles.get(0), 3, 2, 0, guiHandler, 130, 30);
+        guiHandler.registerModule(slotO1);
+        guiHandler.registerModule(slotO2);
+        guiHandler.registerModule(slotO3);
+        guiHandler.registerModule(slotO4);
+        guiModuleItemHandlerSlot slotO5 = new guiModuleItemHandlerSlot(13, level.isClientSide ? null : this.itemOutTiles.get(1), 0, 2, 0, guiHandler, 170, 10);
+        guiModuleItemHandlerSlot slotO6 = new guiModuleItemHandlerSlot(14, level.isClientSide ? null : this.itemOutTiles.get(1), 1, 2, 0, guiHandler, 170, 30);
+        guiModuleItemHandlerSlot slotO7 = new guiModuleItemHandlerSlot(15, level.isClientSide ? null : this.itemOutTiles.get(1), 2, 2, 0, guiHandler, 190, 10);
+        guiModuleItemHandlerSlot slotO8 = new guiModuleItemHandlerSlot(16, level.isClientSide ? null : this.itemOutTiles.get(1), 3, 2, 0, guiHandler, 190, 30);
+        guiHandler.registerModule(slotO5);
+        guiHandler.registerModule(slotO6);
+        guiHandler.registerModule(slotO7);
+        guiHandler.registerModule(slotO8);
 
-        int globalX2 = getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (2 - offset.getZ()) * front.getStepX();
-        int globalY2 = getBlockPos().getY() - 1 + offset.getY();
-        int globalZ2 = getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (2 - offset.getZ()) * front.getStepZ();
-        BlockPos globalPos2 = new BlockPos(globalX2, globalY2, globalZ2);
-        coil2 = level.getBlockState(globalPos2);
+        guiModuleEnergy energyBar = new guiModuleEnergy(17, level.isClientSide ? null : this.energyInTiles.get(0), guiHandler, 10, 10);
+        guiHandler.registerModule(energyBar);
+
+        // create the hotbar slots first, inventory-instant-item-transfer will try slots by the order they were registered
+        List<guiModulePlayerInventorySlot> playerHotBar = guiModulePlayerInventorySlot.makePlayerHotbarModules(27, 140, 100, 0, 1, this.guiHandler);
+        for (guiModulePlayerInventorySlot i : playerHotBar)
+            guiHandler.registerModule(i);
+
+        List<guiModulePlayerInventorySlot> playerInventory = guiModulePlayerInventorySlot.makePlayerInventoryModules(27, 70, 200, 0, 1, this.guiHandler);
+        for (guiModulePlayerInventorySlot i : playerInventory)
+            guiHandler.registerModule(i);
+
+
+        progressBar6px = new guiModuleProgressBarHorizontal6px(-1, 0xFFF0F0F0, guiHandler, 60, 55);
+        guiHandler.registerModule(progressBar6px);
+
+        guiHandler.registerModule(new guiModuleImage(guiHandler, 110, 20, 16, 12, ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_right.png"), 16, 12));
+
     }
 
     @Override
@@ -171,21 +228,39 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             info.putUUID("client_onload", Minecraft.getInstance().player.getUUID());
             PacketDistributor.sendToServer(PacketBlockEntity.getBlockEntityPacket(this, info));
         }
+        coil1 = Blocks.AIR.defaultBlockState();
+        coil2 = Blocks.AIR.defaultBlockState();
     }
 
     // I want the gui only to open when the structure is formed and always only on client side
     public void openGui() {
         if (isMultiblockFormed() && level.isClientSide) {
-            this.guiHandler.openGui(176, 165);
+            this.guiHandler.openGui(216, 165);
         }
     }
 
-    void getUpdateTag(CompoundTag info){
+    void getUpdateTag(CompoundTag info) {
         info.putBoolean("isRunning", this.isRunning);
         info.putInt("recipeProgress", recipeManager.progress);
         info.putBoolean("hasRecipe", recipeManager.currentRecipe != null);
-        if(recipeManager.currentRecipe != null) {
+        if (recipeManager.currentRecipe != null) {
             info.putInt("recipeTime", recipeManager.currentRecipe.ticksRequired);
+            ItemFluidStacks usedStacks = consumeInput(recipeManager.currentRecipe.inputs, true);
+            CompoundTag usedStacksNBT = new CompoundTag();
+            usedStacks.toNBT(usedStacksNBT, level.registryAccess());
+            info.put("nextConsumedStacks", usedStacksNBT);
+
+            ListTag outputStacks = new ListTag();
+            for (String id : recipeManager.currentRecipe.outputs.keySet()) {
+                int n = recipeManager.currentRecipe.outputs.get(id);
+                ItemStack ostack = getItemStackFromId(id, n);
+                if (ostack != null) {
+                    Tag tag = ostack.save(level.registryAccess());
+                    outputStacks.add(tag);
+                }
+            }
+            info.put("nextOutputStacks", outputStacks);
+
         }
         info.putLong("time", System.currentTimeMillis());
     }
@@ -221,6 +296,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
     }
 
     long lastUpdateTime = 0; // because network packets can come in different order from what they are sent
+
     @Override
     // incoming nbt from network to this client will be received here
     public void readClient(CompoundTag tag) {
@@ -235,7 +311,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         if (tag.contains("openGui")) {
             openGui();
         }
-        if(tag.contains("time") && tag.getLong("time") > lastUpdateTime) {
+        if (tag.contains("time") && tag.getLong("time") > lastUpdateTime) {
             lastUpdateTime = tag.getLong("time");
             if (tag.contains("isRunning")) {
                 this.isRunning = tag.getBoolean("isRunning");
@@ -248,6 +324,18 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             }
             if (tag.contains("recipeTime")) {
                 client_recipeMaxTime = tag.getInt("recipeTime");
+            }
+            if (tag.contains("nextConsumedStacks")) {
+                CompoundTag nextConsumedStacks = tag.getCompound("nextConsumedStacks");
+                client_nextConsumedStacks.fromNBT(nextConsumedStacks, level.registryAccess());
+            }
+            if (tag.contains("nextOutputStacks")) {
+                ListTag nextOutputs = tag.getList("nextOutputStacks", Tag.TAG_COMPOUND);
+                client_nextOutputs.clear();
+                for (Tag t : nextOutputs) {
+                    CompoundTag stackTag = ((CompoundTag) t);
+                    client_nextOutputs.add(ItemStack.parse(level.registryAccess(), stackTag).get());
+                }
             }
         }
     }
@@ -271,9 +359,37 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             if (t1.isRunning) {
                 // on client side, also update the progress.
                 t1.client_recipeProgress++;
-//                t1.progressBar6px.setProgress((double) t1.client_recipeProgress / t1.client_recipeMaxTime);
+                t1.progressBar6px.setProgress((double) t1.client_recipeProgress / t1.client_recipeMaxTime);
                 if (t1.client_recipeProgress >= t1.client_recipeMaxTime) {
                     t1.isRunning = false;
+                }
+            }
+            if (t1.isMultiblockFormed()) {
+                if (t1.coil1.getBlock().equals(Blocks.AIR) || t1.coil2.getBlock().equals(Blocks.AIR)) {
+                    Object[][][] structure = t1.getStructure();
+                    Direction front = t1.getFront();
+                    if (front == null) return;
+                    Vec3i offset = t1.getControllerOffset(structure);
+
+                    int globalX1 = t1.getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (1 - offset.getZ()) * front.getStepX();
+                    int globalY1 = t1.getBlockPos().getY() - 1 + offset.getY();
+                    int globalZ1 = t1.getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (1 - offset.getZ()) * front.getStepZ();
+                    BlockPos globalPos1 = new BlockPos(globalX1, globalY1, globalZ1);
+                    t1.coil1 = level.getBlockState(globalPos1);
+                    if (t1.coil1.getBlock() instanceof BlockMultiblockPlaceholder bmp) {
+                        EntityMultiblockPlaceholder te1 = (EntityMultiblockPlaceholder) level.getBlockEntity(globalPos1);
+                        t1.coil1 = te1.replacedState;
+                    }
+
+                    int globalX2 = t1.getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (2 - offset.getZ()) * front.getStepX();
+                    int globalY2 = t1.getBlockPos().getY() - 1 + offset.getY();
+                    int globalZ2 = t1.getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (2 - offset.getZ()) * front.getStepZ();
+                    BlockPos globalPos2 = new BlockPos(globalX2, globalY2, globalZ2);
+                    t1.coil2 = level.getBlockState(globalPos2);
+                    if (t1.coil2.getBlock() instanceof BlockMultiblockPlaceholder bmp) {
+                        EntityMultiblockPlaceholder te2 = (EntityMultiblockPlaceholder) level.getBlockEntity(globalPos2);
+                        t1.coil2 = te2.replacedState;
+                    }
                 }
             }
         }

@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,10 +113,11 @@ WavefrontObject model;
         // because we need access to the item/fluid blocks and
         // we only get this after the structure is completed
         guiHandler = new GuiHandlerBlockEntity(this);
-
         ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/lathe.obj");
         try {
-            model = new WavefrontObject(modelsrc);
+         model = new WavefrontObject(modelsrc);
+            // dont ask me why but the rotation is always messed up if i not set it initially to 0 here...
+            model.setRotationForPart("Shaft",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
         } catch (ModelFormatException e) {
             throw new RuntimeException(e);
         }

@@ -21,9 +21,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static ARMachines.RecipeLoader.loadRecipes;
+
 @Mod(ARMachines.MODID)
-public class ARMachines
-{
+public class ARMachines {
     public static final String MODID = "armachines";
 
     public ARMachines(IEventBus modEventBus, ModContainer modContaine) {
@@ -38,40 +39,20 @@ public class ARMachines
 
     }
 
-    public  void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+    public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         MultiblockRegistry.registerRenderers(event);
     }
 
 
-    private void addCreative(BuildCreativeModeTabContentsEvent e){
+    private void addCreative(BuildCreativeModeTabContentsEvent e) {
         MultiblockRegistry.addCreative(e);
     }
 
-    private void loadComplete(FMLLoadCompleteEvent e){
-
+    private void loadComplete(FMLLoadCompleteEvent e) {
 
         itemHoloProjector.registerMultiblock("Lathe", EntityLathe.structure, EntityLathe.charMapping);
         itemHoloProjector.registerMultiblock("Rolling Machine", EntityRollingMachine.structure, EntityRollingMachine.charMapping);
 
-
-        List<MachineRecipe> latheDefaultRecipes = new ArrayList<>();
-        MachineRecipe r = new MachineRecipe();
-        r.addInput("c:ingots/iron", 1);
-        r.addOutput("immersiveengineering:stick_iron", 1);
-        r.energyPerTick = 50;
-        r.ticksRequired = 100;
-        latheDefaultRecipes.add(r);
-
-        Path configDir = Paths.get(Minecraft.getInstance().gameDirectory.toString(), "config", "armachines");
-        String filename = "lathe.xml";
-        List<MachineRecipe> recipesLathe =  RecipeLoader.loadRecipes(configDir,filename);
-        if (recipesLathe.isEmpty()){
-            RecipeLoader.createRecipeFile(configDir,"example_"+filename,latheDefaultRecipes);
-            recipesLathe = latheDefaultRecipes;
-        }
-        for (MachineRecipe i : recipesLathe) {
-            EntityLathe.addRecipe(i);
-            EntityRollingMachine.addRecipe(i);
-        }
+        loadRecipes();
     }
-    }
+}

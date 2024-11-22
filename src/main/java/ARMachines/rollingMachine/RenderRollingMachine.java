@@ -10,8 +10,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
@@ -49,80 +52,112 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
     // - packedOverlay: The current overlay value of the block entity, usually OverlayTexture.NO_OVERLAY.
     @Override
     public void render(EntityRollingMachine tile, float partialTick, PoseStack stack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-WavefrontObject model = tile.model;
+        WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
-
             stack.pushPose();
-            // Get the facing direction of the block
-            Direction facing = tile.getFacing();
-            // Apply rotation to the PoseStack based on the facing direction
-            Vector3f axis = new Vector3f(0, 1, 0);
-            float angle = 0;
-            switch (facing) {
-                case NORTH:
-                    angle = 270;
-                    break;
-                case EAST:
-                    angle = 280;
-                    break;
-                case SOUTH:
-                    angle = 90;
-                    break;
-                case WEST:
-                    angle = 0;
-                    break;
+            {
+                // Get the facing direction of the block
+                Direction facing = tile.getFacing();
+                // Apply rotation to the PoseStack based on the facing direction
+                Vector3f axis = new Vector3f(0, 1, 0);
+                float angle = 0;
+                switch (facing) {
+                    case NORTH:
+                        angle = 270;
+                        break;
+                    case EAST:
+                        angle = 280;
+                        break;
+                    case SOUTH:
+                        angle = 90;
+                        break;
+                    case WEST:
+                        angle = 0;
+                        break;
+                }
+                angle = (float) Math.toRadians(angle);
+                Quaternionf quaternion = new Quaternionf().fromAxisAngleRad(axis, angle);
+                stack.rotateAround(quaternion, 0.5f, 0, 0.5f);
+
+                stack.pushPose();
+                // move so that the model aligns with the structure
+                stack.translate(0, -1, 0);
+                VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+                RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
+                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                        .setOverlayState(OVERLAY)
+                        .setLightmapState(LIGHTMAP)
+                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setTextureState(new TextureStateShard(tex, false, false))
+                        .createCompositeState(false);
+
+                model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+                int progress = tile.client_recipeProgress;
+                int maxTime = tile.client_recipeMaxTime;
+                double maxTime_I = (double) 1 / maxTime;
+                double partial_add = 0;
+                if (tile.isRunning)
+                    partial_add = partialTick * maxTime_I;
+                double relativeProgress = progress * maxTime_I + partial_add;
+
+
+                Vector3f a = new Vector3f(1, 0, 0);
+                stack.translate(2.14, 0.4, 2.2);
+
+                model.setRotationForPart("Roller2", new Vector3f(0, 0, 0), a, (float) relativeProgress * 360 * 3);
+                model.renderPart("Roller2", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+                stack.translate(0, 0, 0.75);
+                model.setRotationForPart("Roller3", new Vector3f(0, 0, 0), a, (float) relativeProgress * 360 * 3);
+                model.renderPart("Roller3", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+                stack.translate(0, 0.6, -0.36);
+                model.setRotationForPart("Roller1", new Vector3f(0, 0, 0), a, (float) -relativeProgress * 360 * 3);
+                model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+                stack.popPose();
+
+                stack.pushPose();
+                stack.translate(1, -1, 0);
+                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1, stack, bufferSource, packedLight, packedOverlay);
+                stack.translate(1, 0, 0);
+                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2, stack, bufferSource, packedLight, packedOverlay);
+                stack.popPose();
+
+
+                if(tile.client_hasRecipe){
+                    double maxTranslate = 2.2;
+                    double stackTranslate = relativeProgress * maxTranslate;
+                    double offsetX = 2.1;
+                    double offsetY = -0.2;
+                    double offsetZ = 1;
+                    if(stackTranslate < 1.5) {
+                        for (int i = 0; i < tile.client_nextConsumedStacks.itemStacks.size(); i++) {
+                            stack.pushPose();
+                            stack.translate(offsetX, offsetY+i*0.001, offsetZ-i*0.05 + stackTranslate);
+                            stack.mulPose(new Quaternionf().fromAxisAngleDeg(new Vector3f(1, 0, 0), 90));
+
+                            ItemStack currStack = tile.client_nextConsumedStacks.itemStacks.get(i);
+                            Minecraft.getInstance().getItemRenderer().renderStatic(currStack, ItemDisplayContext.GROUND, packedLight, packedOverlay, stack, bufferSource, tile.getLevel(), 0);
+                            stack.popPose();
+                        }
+                    }else{
+                        for (int i = 0; i < tile.client_nextOutputs.size(); i++) {
+                            stack.pushPose();
+                            stack.translate(offsetX, offsetY+i*0.001, offsetZ-i*0.05 + stackTranslate);
+                            stack.mulPose(new Quaternionf().fromAxisAngleDeg(new Vector3f(1, 0, 0), 90));
+
+                            ItemStack currStack = tile.client_nextOutputs.get(i);
+                            Minecraft.getInstance().getItemRenderer().renderStatic(currStack, ItemDisplayContext.GROUND, packedLight, packedOverlay, stack, bufferSource, tile.getLevel(), 0);
+                            stack.popPose();
+                        }
+                    }
+                }
             }
-            angle = (float) Math.toRadians(angle);
-            Quaternionf quaternion = new Quaternionf().fromAxisAngleRad(axis, angle);
-            stack.rotateAround(quaternion, 0.5f, 0, 0.5f);
-
-            stack.pushPose();
-            // move so that the model aligns with the structure
-            stack.translate(0, -1, 0);
-            VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
-            RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
-                    .setOverlayState(OVERLAY)
-                    .setLightmapState(LIGHTMAP)
-                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setTextureState(new TextureStateShard(tex, false, false))
-                    .createCompositeState(false);
-
-            model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-
-            int progress = tile.client_recipeProgress;
-            int maxTime = tile.client_recipeMaxTime;
-            double maxTime_I = (double) 1 / maxTime;
-            double partial_add = 0;
-            if (tile.isRunning)
-                partial_add = partialTick * maxTime_I;
-            double relativeProgress = progress * maxTime_I + partial_add;
-
-
-            Vector3f a = new Vector3f(1, 0, 0);
-            stack.translate(2.14, 0.4, 2.2);
-
-            model.setRotationForPart("Roller2",new Vector3f(0,0,0),a,(float)relativeProgress*360*3);
-            model.renderPart("Roller2", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-
-
-            stack.translate(0, 0, 0.75);
-            model.setRotationForPart("Roller3",new Vector3f(0,0,0),a,(float)relativeProgress*360*3);
-            model.renderPart("Roller3", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-
-
-            stack.translate(0, 0.6, -0.36);
-            model.setRotationForPart("Roller1",new Vector3f(0,0,0),a,(float)-relativeProgress*360*3);
-            model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-
-
-            stack.popPose();
-            stack.pushPose();
-            stack.translate(1, -1, 0);
-            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1,stack,bufferSource,packedLight,packedOverlay);
-            stack.translate(1, 0, 0);
-            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2,stack,bufferSource,packedLight,packedOverlay);
-            stack.popPose();
             stack.popPose();
         }
     }
