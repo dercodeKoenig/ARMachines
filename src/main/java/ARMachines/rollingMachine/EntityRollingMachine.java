@@ -12,6 +12,7 @@ import ARLib.multiblockCore.MultiblockRecipeManager;
 import ARLib.network.PacketBlockEntity;
 import ARLib.obj.ModelFormatException;
 import ARLib.obj.WavefrontObject;
+import ARLib.utils.InventoryUtils;
 import ARLib.utils.ItemFluidStacks;
 import ARLib.utils.MachineRecipe;
 import net.minecraft.client.Minecraft;
@@ -356,7 +357,6 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         if (!level.isClientSide) {
             // update the guiHandler, it checks if anything has changed in the gui and sends changes to the clients tracking the gui
             IGuiHandler.serverTick(t1.guiHandler);
-
             if (t1.isMultiblockFormed()) {
                 // if the machine is complete, let the recipe manager do it's job.
                 // it will automatically scan for recipes and process them
@@ -364,6 +364,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
                 t1.setIsRunning(t1.recipeManager.update());
             }
         }
+
 
         if (level.isClientSide) {
             if (t1.isRunning) {

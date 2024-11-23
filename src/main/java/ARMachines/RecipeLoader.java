@@ -39,7 +39,7 @@ public class RecipeLoader {
         MachineRecipe r = new MachineRecipe();
         r.addInput("c:ingots/iron", 1,0.8f);
         r.addInput("c:ingots/gold", 1,2);
-        r.addInput("minecraft:water", 10000,0.01f);
+        r.addInput("minecraft:water", 1000,0.1f);
         r.addOutput("immersiveengineering:plate_iron", 5,0.5f);
         r.addOutput("immersiveengineering:plate_gold", 2,0.2f);
         r.energyPerTick = 50;
