@@ -1,6 +1,9 @@
 package ARMachines.jei;
 
 import ARLib.utils.MachineRecipe;
+import ARMachines.jei.machineCategories.Lathe;
+import ARMachines.jei.machineCategories.RollingMachine;
+import ARMachines.lathe.EntityLathe;
 import ARMachines.rollingMachine.EntityRollingMachine;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -27,10 +30,12 @@ public class YourMachineJEIPlugin implements IModPlugin {
     }
 @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        registration.addRecipes(MachineRecipeCategory.MACHINE_RECIPE_TYPE, EntityRollingMachine.recipes);
+    registration.addRecipes(Lathe.MACHINE_RECIPE_TYPE, EntityLathe.recipes);
+    registration.addRecipes(RollingMachine.MACHINE_RECIPE_TYPE, EntityRollingMachine.recipes);
     }
 @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
-        registration.addRecipeCategories(new MachineRecipeCategory());
+    registration.addRecipeCategories(new Lathe());
+    registration.addRecipeCategories(new RollingMachine());
     }
 }

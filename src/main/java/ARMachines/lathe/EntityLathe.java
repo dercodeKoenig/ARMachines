@@ -39,7 +39,7 @@ import static ARMachines.MultiblockRegistry.ENTITY_LATHE;
 public class EntityLathe extends EntityMultiblockMaster {
 
 
-    static List<MachineRecipe> recipes = new ArrayList<>();
+    public static List<MachineRecipe> recipes = new ArrayList<>();
     public static void addRecipe(MachineRecipe recipe) {
         recipes.add(recipe);
     }

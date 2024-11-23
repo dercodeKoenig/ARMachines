@@ -37,18 +37,9 @@ import static ARLib.utils.ItemUtils.getFluidStackFromId;
 import static ARLib.utils.ItemUtils.getItemStackFromId;
 import static ARMachines.MultiblockRegistry.BLOCK_LATHE;
 
-public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
+public abstract class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
 
     public MachineRecipeCategory() {
-    }
-    public static final RecipeType<MachineRecipe> MACHINE_RECIPE_TYPE = new RecipeType<>(
-            ResourceLocation.fromNamespaceAndPath("armachines", "machine_recipe"),
-            MachineRecipe.class
-    );
-
-    @Override
-    public RecipeType<MachineRecipe> getRecipeType() {
-        return MACHINE_RECIPE_TYPE;
     }
 
     @Override
@@ -57,7 +48,7 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
     }
     @Override
     public int getWidth(){
-        return 100;
+        return 140;
     }
     @Override
     public int getHeight(){
@@ -74,14 +65,15 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
         // Define inputs
         int rn = 0;
         for (MachineRecipe.recipePart input : recipe.inputs) {
-            rn+=1;
             String inputIdOrTag = input.id;
             int amount = input.num;
 
             ItemStack iStack = getItemStackFromId(inputIdOrTag, amount);
             FluidStack fStack = getFluidStackFromId(inputIdOrTag, amount);
 
-            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.INPUT, 10, 0 + rn * 20);
+            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.INPUT, 0+rn%3*20, 20 + rn/3 * 20);
+            rn+=1;
+
             if (iStack != null) {
                 slot.addItemStack(iStack);
             } else if (fStack != null) {
@@ -111,14 +103,16 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
         // Define outputs
         rn = 0;
         for (MachineRecipe.recipePart output : recipe.outputs) {
-            rn+=1;
+
             String outputId = output.id;
             int amount = output.num;
 
             ItemStack iStack = getItemStackFromId(outputId, amount);
             FluidStack fStack = getFluidStackFromId(outputId, amount);
 
-            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 0 + rn * 20);
+            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.OUTPUT,80+rn%3*20, 20 + rn/3 * 20);
+            rn+=1;
+
             if (iStack != null) {
                 slot.addItemStack(iStack);
             }
@@ -137,6 +131,7 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
                 0, 0,
                 0xFF404040,false
         );
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_right.png"), 65, 70, 10, 12, 0f, 0f, 12, 16, 12, 16);
     }
 
     @Override
