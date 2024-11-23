@@ -135,7 +135,7 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
                 Minecraft.getInstance().font,
                 Component.translatable("Energy per tick: "+ recipe.energyPerTick),
                 0, 0,
-                0xFF404040,true
+                0xFF404040,false
         );
     }
 

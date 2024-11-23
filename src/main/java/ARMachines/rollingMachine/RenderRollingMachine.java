@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import static ARLib.ARLibRegistry.BLOCK_FLUID_INPUT_BLOCK;
 import static ARLib.obj.GroupObject.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
 import static net.minecraft.client.renderer.RenderStateShard.*;
 
@@ -126,6 +127,10 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                 Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1, stack, bufferSource, packedLight, packedOverlay);
                 stack.translate(1, 0, 0);
                 Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2, stack, bufferSource, packedLight, packedOverlay);
+                stack.popPose();
+                stack.pushPose();
+                stack.translate(0, -1, 1);
+                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(BLOCK_FLUID_INPUT_BLOCK.get().defaultBlockState(), stack, bufferSource, packedLight, packedOverlay);
                 stack.popPose();
 
 
