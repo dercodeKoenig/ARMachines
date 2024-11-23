@@ -1,6 +1,7 @@
 package ARMachines.lathe;
 
 
+import ARLib.obj.GroupObject;
 import ARLib.obj.ModelFormatException;
 import ARLib.obj.WavefrontObject;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -53,32 +54,6 @@ public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
 WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
 
-            stack.pushPose();
-            // Get the facing direction of the block
-            Direction facing = tile.getFacing();
-            // Apply rotation to the PoseStack based on the facing direction
-            Vector3f axis = new Vector3f(0, 1, 0);
-            float angle = 0;
-            switch (facing) {
-                case NORTH:
-                    angle = 90;
-                    break;
-                case EAST:
-                    angle = 0;
-                    break;
-                case SOUTH:
-                    angle = 270;
-                    break;
-                case WEST:
-                    angle = 180;
-                    break;
-            }
-            angle = (float) Math.toRadians(angle);
-            Quaternionf quaternion = new Quaternionf().fromAxisAngleRad(axis, angle);
-            stack.rotateAround(quaternion, 0.5f, 0, 0.5f);
-            // move so that the model aligns with the structure
-            stack.translate(0, -1, -2);
-
             VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
             RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
@@ -88,9 +63,7 @@ WavefrontObject model = tile.model;
                     .setTextureState(new TextureStateShard(tex, false, false))
                     .createCompositeState(false);
 
-            model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
-            stack.pushPose();
             int progress = tile.client_recipeProgress;
             int maxTime = tile.client_recipeMaxTime;
             double maxTime_I = (double) 1 / maxTime;
@@ -99,27 +72,66 @@ WavefrontObject model = tile.model;
                 partial_add = partialTick * maxTime_I;
             double relativeProgress = progress * maxTime_I + partial_add;
 
-            double maxTranslate = -1.1;
+
+            // Get the facing direction of the block
+            Direction facing = tile.getFacing();
+            float angle = 0;
+            switch (facing) {
+                case NORTH:
+                    angle = 270;
+                    break;
+                case EAST:
+                    angle = 180;
+                    break;
+                case SOUTH:
+                    angle = 90;
+                    break;
+                case WEST:
+                    angle = 0;
+                    break;
+            }
+
+
+            Vector3f Yaxis = new Vector3f(0, 1, 0);
+
+            model.resetTransformations("Hull");
+            model.translateWorldSpace("Hull",new Vector3f(0.5f,0,0.5f));
+            model.rotateWorldSpace("Hull",Yaxis,angle);
+            model.translateWorldSpace("Hull",new Vector3f(-0.5f,0,-0.5f));
+            model.applyTransformations("Hull");
+            model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+
+            double maxTranslate = -1.12 ;
             double translation = relativeProgress;
             if (translation > 0.5) translation = 1 - translation;
 
-            stack.translate(0, 0,   maxTranslate * translation*2    );
 
-
+            model.resetTransformations("Tool");
+            model.translateWorldSpace("Tool",new Vector3f(0.5f,0,0.5f));
+            model.rotateWorldSpace("Tool",Yaxis,angle);
+            model.translateWorldSpace("Tool",new Vector3f(-0.5f,0,-0.5f));
+            model.translateWorldSpace("Tool",new Vector3f(0.935f,-0.319f,1.51f-(float)maxTranslate * (float)translation*2f));
+            model.applyTransformations("Tool");
             model.renderPart("Tool", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-            stack.popPose();
 
 
-            if (tile.client_hasRecipe) {
-                stack.pushPose();
-                stack.translate(0.38, 1.19, 0);
-                model.setRotationForPart("Shaft", new Vector3f(0,0,0), new Vector3f(0,0,1),(float)relativeProgress*360*2f);
-                //model.setRotationForPart("Shaft", new Vector3f(0,0,0), new Vector3f(0,0,1),(float)0);
+
+            if (tile.client_hasRecipe ||true) {
+                model.resetTransformations("Shaft");
+                model.translateWorldSpace("Shaft",new Vector3f(0.5f,0,0.5f));
+                model.rotateWorldSpace("Shaft",Yaxis,angle);
+                model.translateWorldSpace("Shaft",new Vector3f(-0.5f,0,-0.5f));
+                model.translateWorldSpace("Shaft",new Vector3f(0.62f,0.18f,1.50471f));
+                model.rotateWorldSpace("Shaft",new Vector3f(0,0,1),(float)relativeProgress*360f*10);
+                model.applyTransformations("Shaft");
+
                 model.renderPart("Shaft", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-                stack.popPose();
+
+
             }
 
-            stack.popPose();
         }
     }
 }

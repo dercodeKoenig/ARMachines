@@ -55,34 +55,7 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
     public void render(EntityRollingMachine tile, float partialTick, PoseStack stack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
-            stack.pushPose();
             {
-                // Get the facing direction of the block
-                Direction facing = tile.getFacing();
-                // Apply rotation to the PoseStack based on the facing direction
-                Vector3f axis = new Vector3f(0, 1, 0);
-                float angle = 0;
-                switch (facing) {
-                    case NORTH:
-                        angle = 270;
-                        break;
-                    case EAST:
-                        angle = 280;
-                        break;
-                    case SOUTH:
-                        angle = 90;
-                        break;
-                    case WEST:
-                        angle = 0;
-                        break;
-                }
-                angle = (float) Math.toRadians(angle);
-                Quaternionf quaternion = new Quaternionf().fromAxisAngleRad(axis, angle);
-                stack.rotateAround(quaternion, 0.5f, 0, 0.5f);
-
-                stack.pushPose();
-                // move so that the model aligns with the structure
-                stack.translate(0, -1, 0);
                 VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
                 RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
@@ -92,7 +65,6 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                         .setTextureState(new TextureStateShard(tex, false, false))
                         .createCompositeState(false);
 
-                model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
                 int progress = tile.client_recipeProgress;
                 int maxTime = tile.client_recipeMaxTime;
@@ -103,43 +75,101 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                 double relativeProgress = progress * maxTime_I + partial_add;
 
 
-                Vector3f a = new Vector3f(1, 0, 0);
-                stack.translate(2.14, 0.4, 2.2);
 
-                model.setRotationForPart("Roller2", new Vector3f(0, 0, 0), a, (float) relativeProgress * 360 * 3);
+                // Get the facing direction of the block
+                Direction facing = tile.getFacing();
+                float angle = 0;
+                switch (facing) {
+                    case NORTH:
+                        angle = 270;
+                        break;
+                    case EAST:
+                        angle = 180;
+                        break;
+                    case SOUTH:
+                        angle = 90;
+                        break;
+                    case WEST:
+                        angle = 0;
+                        break;
+                }
+
+
+                Vector3f Yaxis = new Vector3f(0, 1, 0);
+                model.resetTransformations("Hull");
+                model.translateWorldSpace("Hull",new Vector3f(0.5f,0,0.5f));
+                model.rotateWorldSpace("Hull",Yaxis,angle);
+                model.translateWorldSpace("Hull",new Vector3f(-0.5f,0,-0.5f));
+                model.applyTransformations("Hull");
+                model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
+
+
+
+                Vector3f a = new Vector3f(1, 0, 0);
+
+                model.resetTransformations("Roller2");
+                model.translateWorldSpace("Roller2",new Vector3f(0.5f,0,0.5f));
+                model.rotateWorldSpace("Roller2",Yaxis,angle);
+                model.translateWorldSpace("Roller2",new Vector3f(-0.5f,0,-0.5f));
+                model.translateWorldSpace("Roller2",new Vector3f(2.13552f,0.375729f-1,2.17779f));
+                model.rotateWorldSpace("Roller2",a,(float) relativeProgress * 360 * 1f);
+                model.applyTransformations("Roller2");
                 model.renderPart("Roller2", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
+                model.resetTransformations("Roller1");
+                model.translateWorldSpace("Roller1",new Vector3f(0.5f,0,0.5f));
+                model.rotateWorldSpace("Roller1",Yaxis,angle);
+                model.translateWorldSpace("Roller1",new Vector3f(-0.5f,0,-0.5f));
+                model.translateWorldSpace("Roller1",new Vector3f(2.13208f,1.00678f-1,2.5557f));
+                model.rotateWorldSpace("Roller1",a,(float) relativeProgress * 360 * 1f);
+                model.applyTransformations("Roller1");
+                model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
-                stack.translate(0, 0, 0.75);
-                model.setRotationForPart("Roller3", new Vector3f(0, 0, 0), a, (float) relativeProgress * 360 * 3);
+                model.resetTransformations("Roller3");
+                model.translateWorldSpace("Roller3",new Vector3f(0.5f,0,0.5f));
+                model.rotateWorldSpace("Roller3",Yaxis,angle);
+                model.translateWorldSpace("Roller3",new Vector3f(-0.5f,0,-0.5f));
+                model.translateWorldSpace("Roller3",new Vector3f(2.13552f,0.375729f-1,2.93412f));
+                model.rotateWorldSpace("Roller3",a,(float) relativeProgress * 360 * 1f);
+                model.applyTransformations("Roller3");
                 model.renderPart("Roller3", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
 
-                stack.translate(0, 0.6, -0.36);
-                model.setRotationForPart("Roller1", new Vector3f(0, 0, 0), a, (float) -relativeProgress * 360 * 3);
-                model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
-
-
+                // draw the coils
+                stack.pushPose();
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
+                stack.translate(1, -1, 0);
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
+                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1, stack, bufferSource, packedLight, packedOverlay);
                 stack.popPose();
 
+                // draw the coils
                 stack.pushPose();
-                stack.translate(1, -1, 0);
-                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1, stack, bufferSource, packedLight, packedOverlay);
-                stack.translate(1, 0, 0);
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
+                stack.translate(2, -1, 0);
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
                 Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2, stack, bufferSource, packedLight, packedOverlay);
                 stack.popPose();
+
+                // draw the fluid input as long as the model has this bad tank model
                 stack.pushPose();
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
                 stack.translate(0, -1, 1);
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
                 Minecraft.getInstance().getBlockRenderer().renderSingleBlock(BLOCK_FLUID_INPUT_BLOCK.get().defaultBlockState(), stack, bufferSource, packedLight, packedOverlay);
                 stack.popPose();
 
 
+
                 if(tile.client_hasRecipe){
+                    stack.translate(0.5f, 0, 0.5f);
+                    stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
+
                     double maxTranslate = 2.2;
                     double stackTranslate = relativeProgress * maxTranslate;
-                    double offsetX = 2.1;
+                    double offsetX = 1.6;
                     double offsetY = -0.2;
-                    double offsetZ = 1;
+                    double offsetZ = 0.5;
                     if(stackTranslate < 1.5) {
                         for (int i = 0; i < tile.client_nextConsumedStacks.itemStacks.size(); i++) {
                             stack.pushPose();
@@ -163,7 +193,6 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                     }
                 }
             }
-            stack.popPose();
         }
     }
 }

@@ -4,6 +4,7 @@ import ARLib.utils.MachineRecipe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.rollingMachine.EntityRollingMachine;
 import net.minecraft.client.Minecraft;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +22,7 @@ public class RecipeLoader {
         r.ticksRequired = 200;
         DefaultRecipes.add(r);
 
-        Path configDir = Paths.get(Minecraft.getInstance().gameDirectory.toString(), "config", "armachines");
+        Path configDir = Paths.get(FMLPaths.CONFIGDIR.get().toString(), "config", "armachines");
         String filename = "lathe.xml";
         List<MachineRecipe> recipes =  ARLib.utils.RecipeLoader.loadRecipes(configDir,filename);
         if (recipes.isEmpty()){
@@ -46,7 +47,7 @@ public class RecipeLoader {
         r.ticksRequired = 200;
         DefaultRecipes.add(r);
 
-        Path configDir = Paths.get(Minecraft.getInstance().gameDirectory.toString(), "config", "armachines");
+        Path configDir = Paths.get(FMLPaths.CONFIGDIR.get().toString(), "config", "armachines");
         String filename = "rollingmachine.xml";
         List<MachineRecipe> recipes =  ARLib.utils.RecipeLoader.loadRecipes(configDir,filename);
         if (recipes.isEmpty()){

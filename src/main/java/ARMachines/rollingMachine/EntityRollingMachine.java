@@ -32,6 +32,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.joml.Vector3f;
@@ -143,15 +145,13 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         // we only get this after the structure is completed
         guiHandler = new GuiHandlerBlockEntity(this);
 
-        ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.obj");
-        try {
-            model = new WavefrontObject(modelsrc);
-            // dont ask me why but the rotation is always messed up if i not set it initially to 0 here...
-            //model.setRotationForPart("Roller1",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
-            //model.setRotationForPart("Roller2",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
-            //model.setRotationForPart("Roller3",new Vector3f(0,0,0), new Vector3f(0,1,0),0);
-        } catch (ModelFormatException e) {
-            throw new RuntimeException(e);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.obj");
+            try {
+                model = new WavefrontObject(modelsrc);
+            } catch (ModelFormatException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
