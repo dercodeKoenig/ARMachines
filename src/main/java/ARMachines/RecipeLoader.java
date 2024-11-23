@@ -15,8 +15,8 @@ public class RecipeLoader {
     public static void LatheRecipes(){
         List<MachineRecipe> DefaultRecipes = new ArrayList<>();
         MachineRecipe r = new MachineRecipe();
-        r.addInput("c:ingots/iron", 1);
-        r.addOutput("immersiveengineering:stick_iron", 1);
+        r.addInput("c:ingots/iron", 1, 2);
+        r.addOutput("immersiveengineering:stick_iron", 1, 2);
         r.energyPerTick = 50;
         r.ticksRequired = 200;
         DefaultRecipes.add(r);
@@ -25,6 +25,7 @@ public class RecipeLoader {
         String filename = "lathe.xml";
         List<MachineRecipe> recipes =  ARLib.utils.RecipeLoader.loadRecipes(configDir,filename);
         if (recipes.isEmpty()){
+            System.out.println("reset recipes");
             ARLib.utils.RecipeLoader.createRecipeFile(configDir,filename,DefaultRecipes);
             recipes = DefaultRecipes;
         }
@@ -36,10 +37,10 @@ public class RecipeLoader {
     public static void rollingMachineRecipes(){
         List<MachineRecipe> DefaultRecipes = new ArrayList<>();
         MachineRecipe r = new MachineRecipe();
-        r.addInput("c:ingots/iron", 1);
-        r.addInput("c:ingots/gold", 1);
-        r.addOutput("immersiveengineering:plate_iron", 1);
-        r.addOutput("immersiveengineering:plate_gold", 1);
+        r.addInput("c:ingots/iron", 1,2);
+        r.addInput("c:ingots/gold", 1,2);
+        r.addOutput("immersiveengineering:plate_iron", 1,2);
+        r.addOutput("immersiveengineering:plate_gold", 1,2);
         r.energyPerTick = 50;
         r.ticksRequired = 200;
         DefaultRecipes.add(r);

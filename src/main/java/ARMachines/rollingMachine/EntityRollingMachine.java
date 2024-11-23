@@ -247,6 +247,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         }
     }
 
+    // we sync isRunning, recipeProgress, recipe time and inputs/outputs to be able to render / animate the machine
     void getUpdateTag(CompoundTag info) {
         info.putBoolean("isRunning", this.isRunning);
         info.putInt("recipeProgress", recipeManager.progress);
@@ -257,18 +258,19 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             CompoundTag usedStacksNBT = new CompoundTag();
             usedStacks.toNBT(usedStacksNBT, level.registryAccess());
             info.put("nextConsumedStacks", usedStacksNBT);
-
             ListTag outputStacks = new ListTag();
-            for (String id : recipeManager.currentRecipe.outputs.keySet()) {
-                int n = recipeManager.currentRecipe.outputs.get(id);
-                ItemStack ostack = getItemStackFromId(id, n);
-                if (ostack != null) {
-                    Tag tag = ostack.save(level.registryAccess());
-                    outputStacks.add(tag);
+            for (MachineRecipe.recipePart part : recipeManager.currentRecipe.outputs) {
+                int n = part.actual_num; // current recipe has actual num to produce / consume already computed
+                String id = part.id;
+                if(n>0) {
+                    ItemStack ostack = getItemStackFromId(id, n);
+                    if (ostack != null) {
+                        Tag tag = ostack.save(level.registryAccess());
+                        outputStacks.add(tag);
+                    }
                 }
             }
             info.put("nextOutputStacks", outputStacks);
-
         }
         info.putLong("time", System.currentTimeMillis());
     }

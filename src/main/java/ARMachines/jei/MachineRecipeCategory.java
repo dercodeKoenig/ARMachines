@@ -69,35 +69,35 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
         return null;
     }
 
-    int lastInt = 0;
-    int getNextInt(){
-        lastInt++;
-        return lastInt;
-    }
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, MachineRecipe recipe, IFocusGroup focuses) {
         // Define inputs
-        lastInt=0;
-        recipe.inputs.forEach((inputIdOrTag, amount) -> {
+        int rn = 0;
+        for (MachineRecipe.recipePart input : recipe.inputs) {
+            rn+=1;
+            String inputIdOrTag = input.id;
+            int amount = input.num;
+
             ItemStack iStack = getItemStackFromId(inputIdOrTag, amount);
             FluidStack fStack = getFluidStackFromId(inputIdOrTag, amount);
 
-            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.INPUT, 10, 0+getNextInt()*20);
-            if (iStack != null)
+            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.INPUT, 10, 0 + rn * 20);
+            if (iStack != null) {
                 slot.addItemStack(iStack);
-            else if (fStack != null)
+            } else if (fStack != null) {
                 slot.addFluidStack(fStack.getFluid(), fStack.getAmount());
-            else {
+            } else {
                 ResourceLocation tagLocation = ResourceLocation.tryParse(inputIdOrTag);
-
                 TagKey<Fluid> fluidTag = TagKey.create(Registries.FLUID, tagLocation);
                 List<FluidStack> fluidStacks = new ArrayList<>();
+
                 BuiltInRegistries.FLUID.getTag(fluidTag).ifPresent(tag -> {
                     for (Holder<Fluid> fluidHolder : tag) {
                         Fluid fluid = fluidHolder.value();
                         fluidStacks.add(new FluidStack(fluid, amount));
                     }
                 });
+
                 if (!fluidStacks.isEmpty()) {
                     for (FluidStack f : fluidStacks) {
                         slot.addFluidStack(f.getFluid(), f.getAmount());
@@ -106,18 +106,26 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
                     slot.addIngredients(Ingredient.of(TagKey.create(Registries.ITEM, tagLocation)));
                 }
             }
-        });
+        }
 
-        lastInt=0;
         // Define outputs
-        recipe.outputs.forEach((outputId, amount) -> {
+        rn = 0;
+        for (MachineRecipe.recipePart output : recipe.outputs) {
+            rn+=1;
+            String outputId = output.id;
+            int amount = output.num;
+
             ItemStack iStack = getItemStackFromId(outputId, amount);
             FluidStack fStack = getFluidStackFromId(outputId, amount);
-            if (iStack != null)
-                builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 0+getNextInt()*20).addItemStack(iStack);
-            if (fStack != null)
-                builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 0+getNextInt()*20).addFluidStack(fStack.getFluid(), fStack.getAmount());
-        });
+
+            IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 0 + rn * 20);
+            if (iStack != null) {
+                slot.addItemStack(iStack);
+            }
+            if (fStack != null) {
+                slot.addFluidStack(fStack.getFluid(), fStack.getAmount());
+            }
+        }
     }
 
     @Override
@@ -127,7 +135,7 @@ public class MachineRecipeCategory implements IRecipeCategory<MachineRecipe> {
                 Minecraft.getInstance().font,
                 Component.translatable("Energy per tick: "+ recipe.energyPerTick),
                 0, 0,
-                0xFF404040
+                0xFF404040,true
         );
     }
 
