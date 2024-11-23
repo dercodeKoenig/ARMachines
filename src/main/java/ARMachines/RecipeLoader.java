@@ -37,10 +37,11 @@ public class RecipeLoader {
     public static void rollingMachineRecipes(){
         List<MachineRecipe> DefaultRecipes = new ArrayList<>();
         MachineRecipe r = new MachineRecipe();
-        r.addInput("c:ingots/iron", 1,2);
+        r.addInput("c:ingots/iron", 1,0.8f);
         r.addInput("c:ingots/gold", 1,2);
-        r.addOutput("immersiveengineering:plate_iron", 1,2);
-        r.addOutput("immersiveengineering:plate_gold", 1,2);
+        r.addInput("minecraft:water", 10000,0.01f);
+        r.addOutput("immersiveengineering:plate_iron", 5,0.5f);
+        r.addOutput("immersiveengineering:plate_gold", 2,0.2f);
         r.energyPerTick = 50;
         r.ticksRequired = 200;
         DefaultRecipes.add(r);
