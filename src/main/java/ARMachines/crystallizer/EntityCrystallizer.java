@@ -192,6 +192,8 @@ public class EntityCrystallizer extends EntityMultiblockMaster {
     public EntityCrystallizer(BlockPos pos, BlockState state) {
         super(ENTITY_CRYSTALLIZER.get(), pos, state);
 
+        this.alwaysOpenMasterGui = true;
+
         recipeManager1.recipes = EntityCrystallizer.recipes;
         recipeManager2.recipes = EntityCrystallizer.recipes;
         recipeManager3.recipes = EntityCrystallizer.recipes;
@@ -219,9 +221,69 @@ public class EntityCrystallizer extends EntityMultiblockMaster {
     public void onStructureComplete() {
         // create a empty guiHandler
         guiHandler = new GuiHandlerBlockEntity(this);
-        tank1.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,10,10);
-        tank2.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,10,20);
-        tank3.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,10,30);
+
+        //energy
+        guiModuleEnergy energyBar = new guiModuleEnergy(17, level.isClientSide ? null : this.energyInTiles.get(0), guiHandler, 10, 10);
+        guiHandler.registerModule(energyBar);
+
+        //fluid input
+        guiModuleFluidTankDisplay fluidInput = new guiModuleFluidTankDisplay(18,level.isClientSide ? null :fluidInTiles.get(0),0,guiHandler,50,10);
+        guiHandler.registerModule(fluidInput);
+        guiModuleItemHandlerSlot fluidInSlot = new guiModuleItemHandlerSlot(19, level.isClientSide ? null : this.fluidInTiles.get(0), 0, 1, 0, guiHandler, 30, 10);
+        fluidInSlot.setSlotBackground(ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/gui_item_slot_background_bucket.png"), 18,18);
+        guiModuleItemHandlerSlot fluidOutSlot = new guiModuleItemHandlerSlot(20, level.isClientSide ? null : this.fluidInTiles.get(0), 1, 1, 0, guiHandler, 30, 45);
+        guiHandler.registerModule(fluidInSlot);
+        guiHandler.registerModule(fluidOutSlot);
+        guiHandler.registerModule(new guiModuleImage(guiHandler, 30, 30, 16, 12, ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_down.png"), 16, 12));
+
+        //fluid output
+        guiModuleFluidTankDisplay fluidOutput = new guiModuleFluidTankDisplay(21,level.isClientSide ? null :fluidOutTiles.get(0),0,guiHandler,174,10);
+        guiHandler.registerModule(fluidOutput);
+        guiModuleItemHandlerSlot fluidInSlot2 = new guiModuleItemHandlerSlot(22, level.isClientSide ? null : this.fluidOutTiles.get(0), 0, 1, 0, guiHandler, 190, 10);
+        fluidInSlot2.setSlotBackground(ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/gui_item_slot_background_bucket.png"), 18,18);
+        guiModuleItemHandlerSlot fluidOutSlot2 = new guiModuleItemHandlerSlot(23, level.isClientSide ? null : this.fluidOutTiles.get(0), 1, 1, 0, guiHandler, 190, 45);
+        guiHandler.registerModule(fluidInSlot2);
+        guiHandler.registerModule(fluidOutSlot2);
+        guiHandler.registerModule(new guiModuleImage(guiHandler, 190, 30, 16, 12, ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_down.png"), 16, 12));
+
+
+
+        // 4 slots for the input block
+        guiModuleItemHandlerSlot slotI1 = new guiModuleItemHandlerSlot(1, level.isClientSide ? null : this.itemInTiles.get(0), 0, 1, 0, guiHandler, 70, 20);
+        guiModuleItemHandlerSlot slotI2 = new guiModuleItemHandlerSlot(2, level.isClientSide ? null : this.itemInTiles.get(0), 1, 1, 0, guiHandler, 70, 40);
+        guiModuleItemHandlerSlot slotI3 = new guiModuleItemHandlerSlot(3, level.isClientSide ? null : this.itemInTiles.get(0), 2, 1, 0, guiHandler, 90, 20);
+        guiModuleItemHandlerSlot slotI4 = new guiModuleItemHandlerSlot(4, level.isClientSide ? null : this.itemInTiles.get(0), 3, 1, 0, guiHandler, 90, 40);
+        guiHandler.registerModule(slotI1);
+        guiHandler.registerModule(slotI2);
+        guiHandler.registerModule(slotI3);
+        guiHandler.registerModule(slotI4);
+
+        // 8 slots for the output block
+        guiModuleItemHandlerSlot slotO1 = new guiModuleItemHandlerSlot(9, level.isClientSide ? null : this.itemOutTiles.get(0), 0, 2, 0, guiHandler, 130, 20);
+        guiModuleItemHandlerSlot slotO2 = new guiModuleItemHandlerSlot(10, level.isClientSide ? null : this.itemOutTiles.get(0), 1, 2, 0, guiHandler, 130, 40);
+        guiModuleItemHandlerSlot slotO3 = new guiModuleItemHandlerSlot(11, level.isClientSide ? null : this.itemOutTiles.get(0), 2, 2, 0, guiHandler, 150, 20);
+        guiModuleItemHandlerSlot slotO4 = new guiModuleItemHandlerSlot(12, level.isClientSide ? null : this.itemOutTiles.get(0), 3, 2, 0, guiHandler, 150, 40);
+        guiHandler.registerModule(slotO1);
+        guiHandler.registerModule(slotO2);
+        guiHandler.registerModule(slotO3);
+        guiHandler.registerModule(slotO4);
+
+
+        // create the hotbar slots first, inventory-instant-item-transfer will try slots by the order they were registered
+        List<guiModulePlayerInventorySlot> playerHotBar = guiModulePlayerInventorySlot.makePlayerHotbarModules(27, 160, 100, 0, 1, this.guiHandler);
+        for (guiModulePlayerInventorySlot i : playerHotBar)
+            guiHandler.registerModule(i);
+
+        List<guiModulePlayerInventorySlot> playerInventory = guiModulePlayerInventorySlot.makePlayerInventoryModules(27, 90, 200, 0, 1, this.guiHandler);
+        for (guiModulePlayerInventorySlot i : playerInventory)
+            guiHandler.registerModule(i);
+
+
+        guiHandler.registerModule(new guiModuleImage(guiHandler, 110, 33, 16, 12, ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/arrow_right.png"), 16, 12));
+
+        tank1.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,10,70);
+        tank2.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,80,70);
+        tank3.progressBar6px = new guiModuleProgressBarHorizontal6px(1,0xFFF0F0F0,guiHandler,150,70);
 
         guiHandler.registerModule(tank1.progressBar6px);
         guiHandler.registerModule(tank2.progressBar6px);
@@ -242,7 +304,7 @@ public class EntityCrystallizer extends EntityMultiblockMaster {
     // I want the gui only to open when the structure is formed and always only on client side
     public void openGui() {
         if (isMultiblockFormed() && level.isClientSide) {
-            this.guiHandler.openGui(196, 205);
+            this.guiHandler.openGui(216, 185);
         }
     }
 

@@ -3,6 +3,7 @@ package ARMachines._jei;
 import ARMachines._jei.machineCategories.Crystallizer;
 import ARMachines._jei.machineCategories.Lathe;
 import ARMachines._jei.machineCategories.RollingMachine;
+import ARMachines.crystallizer.EntityCrystallizer;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.rollingMachine.EntityRollingMachine;
 import mezz.jei.api.IModPlugin;
@@ -22,7 +23,7 @@ public class YourMachineJEIPlugin implements IModPlugin {
     public void registerRecipes(IRecipeRegistration registration) {
     registration.addRecipes(Lathe.MACHINE_RECIPE_TYPE, EntityLathe.recipes);
     registration.addRecipes(RollingMachine.MACHINE_RECIPE_TYPE, EntityRollingMachine.recipes);
-    registration.addRecipes(Crystallizer.MACHINE_RECIPE_TYPE, EntityLathe.recipes);
+    registration.addRecipes(Crystallizer.MACHINE_RECIPE_TYPE, EntityCrystallizer.recipes);
     }
 @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {

@@ -166,9 +166,10 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         guiModuleEnergy energyBar = new guiModuleEnergy(17, level.isClientSide ? null : this.energyInTiles.get(0), guiHandler, 10, 10);
         guiHandler.registerModule(energyBar);
 
-        guiModuleFluidTankDisplay fluidInput = new guiModuleFluidTankDisplay(18,level.isClientSide ? null :fluidInTiles.get(0),0,guiHandler,30,10);
+        guiModuleFluidTankDisplay fluidInput = new guiModuleFluidTankDisplay(18,level.isClientSide ? null :fluidInTiles.get(0),0,guiHandler,34,10);
         guiHandler.registerModule(fluidInput);
         guiModuleItemHandlerSlot fluidInSlot = new guiModuleItemHandlerSlot(19, level.isClientSide ? null : this.fluidInTiles.get(0), 0, 1, 0, guiHandler, 50, 10);
+        fluidInSlot.setSlotBackground(ResourceLocation.fromNamespaceAndPath("arlib", "textures/gui/gui_item_slot_background_bucket.png"), 18,18);
         guiModuleItemHandlerSlot fluidOutSlot = new guiModuleItemHandlerSlot(20, level.isClientSide ? null : this.fluidInTiles.get(0), 1, 1, 0, guiHandler, 50, 45);
         guiHandler.registerModule(fluidInSlot);
         guiHandler.registerModule(fluidOutSlot);
