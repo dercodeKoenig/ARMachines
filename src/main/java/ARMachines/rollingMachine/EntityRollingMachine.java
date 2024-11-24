@@ -146,7 +146,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         guiHandler = new GuiHandlerBlockEntity(this);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine.obj");
+            ResourceLocation modelsrc = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/rollingmachine_new.obj");
             try {
                 model = new WavefrontObject(modelsrc);
             } catch (ModelFormatException e) {

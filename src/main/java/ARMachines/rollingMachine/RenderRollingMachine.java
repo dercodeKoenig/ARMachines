@@ -151,15 +151,6 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                 Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2, stack, bufferSource, packedLight, packedOverlay);
                 stack.popPose();
 
-                // draw the fluid input as long as the model has this bad tank model
-                stack.pushPose();
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
-                stack.translate(0, -1, 1);
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
-                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(BLOCK_FLUID_INPUT_BLOCK.get().defaultBlockState(), stack, bufferSource, packedLight, packedOverlay);
-                stack.popPose();
-
-
 
                 if(tile.client_hasRecipe){
                     stack.translate(0.5f, 0, 0.5f);
