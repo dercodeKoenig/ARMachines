@@ -121,7 +121,7 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                 model.rotateWorldSpace("Roller1",Yaxis,angle);
                 model.translateWorldSpace("Roller1",new Vector3f(-0.5f,0,-0.5f));
                 model.translateWorldSpace("Roller1",new Vector3f(2.13208f,1.00678f-1,2.5557f));
-                model.rotateWorldSpace("Roller1",a,(float) relativeProgress * 360 * 1f);
+                model.rotateWorldSpace("Roller1",a,-(float) relativeProgress * 360 * 1f);
                 model.applyTransformations("Roller1");
                 model.renderPart("Roller1", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 

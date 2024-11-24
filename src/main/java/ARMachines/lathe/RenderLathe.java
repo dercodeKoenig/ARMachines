@@ -118,7 +118,7 @@ WavefrontObject model = tile.model;
 
 
 
-            if (tile.client_hasRecipe ||true) {
+            if (tile.client_hasRecipe) {
                 model.resetTransformations("Shaft");
                 model.translateWorldSpace("Shaft",new Vector3f(0.5f,0,0.5f));
                 model.rotateWorldSpace("Shaft",Yaxis,angle);
