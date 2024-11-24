@@ -172,12 +172,12 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                             stack.popPose();
                         }
                     }else{
-                        for (int i = 0; i < tile.client_nextOutputs.size(); i++) {
+                        for (int i = 0; i < tile.client_nextProducedStacks.itemStacks.size(); i++) {
                             stack.pushPose();
                             stack.translate(offsetX, offsetY+i*0.001, offsetZ-i*0.05 + stackTranslate);
                             stack.mulPose(new Quaternionf().fromAxisAngleDeg(new Vector3f(1, 0, 0), 90));
 
-                            ItemStack currStack = tile.client_nextOutputs.get(i);
+                            ItemStack currStack = tile.client_nextProducedStacks.itemStacks.get(i);
                             Minecraft.getInstance().getItemRenderer().renderStatic(currStack, ItemDisplayContext.GROUND, packedLight, packedOverlay, stack, bufferSource, tile.getLevel(), 0);
                             stack.popPose();
                         }

@@ -32,8 +32,7 @@ public class BlockLathe extends BlockMultiblockMaster {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (world.getBlockEntity(pos) instanceof EntityLathe e &&
-                state.getBlock() instanceof BlockLathe b) {
+        if (world.getBlockEntity(pos) instanceof EntityLathe e) {
             if (world.isClientSide && state.getValue(STATE_MULTIBLOCK_FORMED)) {
                 e.openGui();
             }

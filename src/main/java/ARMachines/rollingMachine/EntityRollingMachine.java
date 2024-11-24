@@ -126,7 +126,7 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
     int client_recipeProgress = 0;
     boolean client_hasRecipe = false;
     ItemFluidStacks client_nextConsumedStacks = new ItemFluidStacks();
-    List<ItemStack> client_nextOutputs = new ArrayList<>();
+    ItemFluidStacks client_nextProducedStacks = new ItemFluidStacks();
 
     // this gui module is not sync-able, it uses a set() method to set the value so we need to keep an instance of it
     guiModuleProgressBarHorizontal6px progressBar6px;
@@ -259,19 +259,13 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             CompoundTag usedStacksNBT = new CompoundTag();
             usedStacks.toNBT(usedStacksNBT, level.registryAccess());
             info.put("nextConsumedStacks", usedStacksNBT);
-            ListTag outputStacks = new ListTag();
-            for (MachineRecipe.recipePart part : recipeManager.currentRecipe.outputs) {
-                int n = part.actual_num; // current recipe has actual num to produce / consume already computed
-                String id = part.id;
-                if(n>0) {
-                    ItemStack ostack = getItemStackFromId(id, n);
-                    if (ostack != null) {
-                        Tag tag = ostack.save(level.registryAccess());
-                        outputStacks.add(tag);
-                    }
-                }
-            }
-            info.put("nextOutputStacks", outputStacks);
+
+
+            ItemFluidStacks nextProducedStacks = recipeManager.getNextProducedItems();
+            CompoundTag nextProducedStacksNBT = new CompoundTag();
+            nextProducedStacks.toNBT(nextProducedStacksNBT, level.registryAccess());
+            info.put("nextProducedStacks", nextProducedStacksNBT);
+
         }
         info.putLong("time", System.currentTimeMillis());
     }
@@ -340,13 +334,9 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
                 CompoundTag nextConsumedStacks = tag.getCompound("nextConsumedStacks");
                 client_nextConsumedStacks.fromNBT(nextConsumedStacks, level.registryAccess());
             }
-            if (tag.contains("nextOutputStacks")) {
-                ListTag nextOutputs = tag.getList("nextOutputStacks", Tag.TAG_COMPOUND);
-                client_nextOutputs.clear();
-                for (Tag t : nextOutputs) {
-                    CompoundTag stackTag = ((CompoundTag) t);
-                    client_nextOutputs.add(ItemStack.parse(level.registryAccess(), stackTag).get());
-                }
+            if (tag.contains("nextProducedStacks")) {
+                CompoundTag nextProducedStacks = tag.getCompound("nextProducedStacks");
+                client_nextProducedStacks.fromNBT(nextProducedStacks, level.registryAccess());
             }
         }
     }

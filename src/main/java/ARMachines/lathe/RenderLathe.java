@@ -24,8 +24,6 @@ public class RenderLathe implements BlockEntityRenderer<EntityLathe> {
 
     ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("armachines", "multiblock/lathe.png");
 
-    WavefrontObject model;
-
     public int getViewDistance() {
         return 256;
     }

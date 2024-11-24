@@ -1,7 +1,7 @@
-package ARMachines.rollingMachine;
-
+package ARMachines.crystallizer;
 
 import ARLib.multiblockCore.BlockMultiblockMaster;
+import ARMachines.lathe.EntityLathe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -14,33 +14,30 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
 
+import static ARMachines.MultiblockRegistry.ENTITY_CRYSTALLIZER;
 import static ARMachines.MultiblockRegistry.ENTITY_LATHE;
-import static ARMachines.MultiblockRegistry.ENTITY_ROLLINGMACHINE;
 
-public class BlockRollingMachine extends BlockMultiblockMaster {
+public class BlockCrystallizer extends BlockMultiblockMaster {
 
-    public BlockRollingMachine(Properties properties) {super(properties);}
+    public BlockCrystallizer(Properties properties) {super(properties);}
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-        return ENTITY_ROLLINGMACHINE.get().create(blockPos,blockState);
+        return ENTITY_CRYSTALLIZER.get().create(blockPos,blockState);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return EntityRollingMachine::tick;
+        return EntityCrystallizer::tick;
     }
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (world.getBlockEntity(pos) instanceof EntityRollingMachine e) {
+        if (world.getBlockEntity(pos) instanceof EntityCrystallizer e) {
             if (world.isClientSide && state.getValue(STATE_MULTIBLOCK_FORMED)) {
                 e.openGui();
             }
         }
         return super.useWithoutItem(state, world, pos, player, hitResult);
     }
-
-
-
 }

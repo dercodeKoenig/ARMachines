@@ -1,6 +1,9 @@
 package ARMachines;
 
 
+import ARMachines.crystallizer.BlockCrystallizer;
+import ARMachines.crystallizer.EntityCrystallizer;
+import ARMachines.crystallizer.RenderCrystallizer;
 import ARMachines.lathe.BlockLathe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.lathe.RenderLathe;
@@ -49,11 +52,22 @@ public class MultiblockRegistry {
             () -> BlockEntityType.Builder.of(EntityRollingMachine::new, BLOCK_ROLLINGMACHINE.get()).build(null)
     );
 
+    // crystallizer
+    public static final DeferredHolder<Block, Block> BLOCK_CRYSTALLIZER = BLOCKS.register(
+            "block_crystallizer",
+            () -> new BlockCrystallizer(BlockBehaviour.Properties.of())
+    );
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EntityCrystallizer>> ENTITY_CRYSTALLIZER = BLOCK_ENTITIES.register(
+            "entity_crystallizer",
+            () -> BlockEntityType.Builder.of(EntityCrystallizer::new, BLOCK_CRYSTALLIZER.get()).build(null)
+    );
+
 
 
     public static void register(IEventBus modBus) {
         registerBlockItem("block_lathe", BLOCK_LATHE);
         registerBlockItem("block_rollingmachine", BLOCK_ROLLINGMACHINE);
+        registerBlockItem("block_crystallizer", BLOCK_CRYSTALLIZER);
 
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
@@ -63,12 +77,14 @@ public class MultiblockRegistry {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
         event.registerBlockEntityRenderer(ENTITY_ROLLINGMACHINE.get(), RenderRollingMachine::new);
+        event.registerBlockEntityRenderer(ENTITY_CRYSTALLIZER.get(), RenderCrystallizer::new);
     }
 
     public static void addCreative(BuildCreativeModeTabContentsEvent e){
         if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS){
             e.accept(BLOCK_LATHE.get());
             e.accept(BLOCK_ROLLINGMACHINE.get());
+            e.accept(BLOCK_CRYSTALLIZER.get());
         }
     }
 }

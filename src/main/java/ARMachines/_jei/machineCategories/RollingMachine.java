@@ -1,19 +1,17 @@
-package ARMachines.jei.machineCategories;
+package ARMachines._jei.machineCategories;
 
 import ARLib.utils.MachineRecipe;
-import ARMachines.ARMachines;
-import ARMachines.jei.MachineRecipeCategory;
+import ARMachines._jei.MachineRecipeCategory;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.recipe.RecipeType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
-public class Lathe extends MachineRecipeCategory {
-
+public class RollingMachine extends MachineRecipeCategory {
 
     public static final RecipeType<MachineRecipe> MACHINE_RECIPE_TYPE = new RecipeType<>(
-            ResourceLocation.fromNamespaceAndPath("armachines", "lathe"),
+            ResourceLocation.fromNamespaceAndPath("armachines", "rollingmachine"),
             MachineRecipe.class
     );
 
@@ -24,7 +22,7 @@ public class Lathe extends MachineRecipeCategory {
 
     @Override
     public Component getTitle() {
-        return Component.translatable("Lathe");
+        return Component.translatable("RollingMachine");
     }
 
     @Override
