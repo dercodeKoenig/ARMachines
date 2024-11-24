@@ -144,9 +144,9 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 stack.translate(0.5f, 0, 0.5f);
                 stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
                 stack.translate(-0.5f, 0, -0.5f);
-                stack.translate(1f, 1.4, -0.34f);
+                stack.translate(1f, 1.4, -0.4f);
                 stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,90));
-                stack.scale(0.7f,0.7f,0.7f);
+                stack.scale(0.6f,0.6f,0.6f);
                 stack.scale((float) relativeProgress, (float) relativeProgress, (float) relativeProgress);
 
                 int n = 0;
@@ -198,7 +198,7 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 stack.translate(-0.5f, 0, -0.5f);
                 stack.translate(1f, 1.4, 0.5f);
                 stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,90));
-                stack.scale(0.7f,0.7f,0.7f);
+                stack.scale(0.6f,0.6f,0.6f);
                 stack.scale((float) relativeProgress, (float) relativeProgress, (float) relativeProgress);
 
                 int n = 0;
@@ -247,9 +247,9 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 stack.translate(0.5f, 0, 0.5f);
                 stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
                 stack.translate(-0.5f, 0, -0.5f);
-                stack.translate(1f, 1.4, 1.34f);
+                stack.translate(1f, 1.4, 1.4f);
                 stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,90));
-                stack.scale(0.7f,0.7f,0.7f);
+                stack.scale(0.6f,0.6f,0.6f);
                 stack.scale((float) relativeProgress, (float) relativeProgress, (float) relativeProgress);
 
                 int n = 0;
