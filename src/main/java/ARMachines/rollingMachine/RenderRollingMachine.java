@@ -134,24 +134,6 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
                 model.applyTransformations("Roller3");
                 model.renderPart("Roller3", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
-
-                // draw the coils
-                stack.pushPose();
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
-                stack.translate(1, -1, 0);
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
-                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil1, stack, bufferSource, packedLight, packedOverlay);
-                stack.popPose();
-
-                // draw the coils
-                stack.pushPose();
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
-                stack.translate(2, -1, 0);
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,-angle));
-                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(tile.coil2, stack, bufferSource, packedLight, packedOverlay);
-                stack.popPose();
-
-
                 if(tile.client_hasRecipe){
                     stack.translate(0.5f, 0, 0.5f);
                     stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));

@@ -71,6 +71,13 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
                     {'C', BLOCK_STRUCTURE.get(), BLOCK_STRUCTURE.get(), 'O'}}
     };
 
+    @Override
+    public boolean[][][] hideBlocks() {
+        boolean hideBlocks[][][] = super.hideBlocks();
+        hideBlocks[1][2][0] = false;
+        hideBlocks[1][1][0] = false;
+        return hideBlocks;
+    }
     // setup all the blocks that can be used for a char in the structure
     // I is item input, O is item output, P is power input
     static {
@@ -155,9 +162,6 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
         }
     }
 
-    BlockState coil1 = Blocks.AIR.defaultBlockState();
-    BlockState coil2 = Blocks.AIR.defaultBlockState();
-
     @Override
     public void onStructureComplete() {
         // create a empty guiHandler
@@ -238,8 +242,6 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
             info.putUUID("client_onload", Minecraft.getInstance().player.getUUID());
             PacketDistributor.sendToServer(PacketBlockEntity.getBlockEntityPacket(this, info));
         }
-        coil1 = Blocks.AIR.defaultBlockState();
-        coil2 = Blocks.AIR.defaultBlockState();
     }
 
     // I want the gui only to open when the structure is formed and always only on client side
@@ -364,34 +366,6 @@ public class EntityRollingMachine extends EntityMultiblockMaster {
                 t1.progressBar6px.setProgress((double) t1.client_recipeProgress / t1.client_recipeMaxTime);
                 if (t1.client_recipeProgress >= t1.client_recipeMaxTime) {
                     t1.isRunning = false;
-                }
-            }
-            if (t1.isMultiblockFormed()) {
-                if (t1.coil1.getBlock().equals(Blocks.AIR) || t1.coil2.getBlock().equals(Blocks.AIR)) {
-                    Object[][][] structure = t1.getStructure();
-                    Direction front = t1.getFront();
-                    if (front == null) return;
-                    Vec3i offset = t1.getControllerOffset(structure);
-
-                    int globalX1 = t1.getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (1 - offset.getZ()) * front.getStepX();
-                    int globalY1 = t1.getBlockPos().getY() - 1 + offset.getY();
-                    int globalZ1 = t1.getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (1 - offset.getZ()) * front.getStepZ();
-                    BlockPos globalPos1 = new BlockPos(globalX1, globalY1, globalZ1);
-                    t1.coil1 = level.getBlockState(globalPos1);
-                    if (t1.coil1.getBlock() instanceof BlockMultiblockPlaceholder bmp) {
-                        EntityMultiblockPlaceholder te1 = (EntityMultiblockPlaceholder) level.getBlockEntity(globalPos1);
-                        t1.coil1 = te1.replacedState;
-                    }
-
-                    int globalX2 = t1.getBlockPos().getX() + (0 - offset.getX()) * front.getStepZ() - (2 - offset.getZ()) * front.getStepX();
-                    int globalY2 = t1.getBlockPos().getY() - 1 + offset.getY();
-                    int globalZ2 = t1.getBlockPos().getZ() - (0 - offset.getX()) * front.getStepX() - (2 - offset.getZ()) * front.getStepZ();
-                    BlockPos globalPos2 = new BlockPos(globalX2, globalY2, globalZ2);
-                    t1.coil2 = level.getBlockState(globalPos2);
-                    if (t1.coil2.getBlock() instanceof BlockMultiblockPlaceholder bmp) {
-                        EntityMultiblockPlaceholder te2 = (EntityMultiblockPlaceholder) level.getBlockEntity(globalPos2);
-                        t1.coil2 = te2.replacedState;
-                    }
                 }
             }
         }

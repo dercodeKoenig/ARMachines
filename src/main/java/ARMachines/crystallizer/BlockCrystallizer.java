@@ -34,7 +34,7 @@ public class BlockCrystallizer extends BlockMultiblockMaster {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (world.getBlockEntity(pos) instanceof EntityCrystallizer e) {
-            if (world.isClientSide && state.getValue(STATE_MULTIBLOCK_FORMED)) {
+            if (world.isClientSide && state.getValue(STATE_HIDE_BLOCK)) {
                 e.openGui();
             }
         }
