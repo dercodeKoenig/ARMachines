@@ -66,7 +66,6 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
 
         WavefrontObject model = tile.model;
         if (tile.isMultiblockFormed()) {
-
             VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
             RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
@@ -139,9 +138,11 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                     RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
                             .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
                             .setLightmapState(LIGHTMAP)
+                            .setOverlayState(OVERLAY)
                             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
-                            .createCompositeState(false);
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,true))
+                            .setOutputState(ITEM_ENTITY_TARGET)
+                            .createCompositeState(true);
 
                     model.scaleUV("Liquid",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid");
@@ -203,11 +204,13 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
 
                     VertexFormat vertexFormatTank = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
                     RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
-                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_CULL_SHADER)
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
                             .setLightmapState(LIGHTMAP)
+                            .setOverlayState(OVERLAY)
                             .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
-                            .createCompositeState(false);
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,true))
+                            .setOutputState(ITEM_ENTITY_TARGET)
+                            .createCompositeState(true);
 
                     model.scaleUV("Liquid.002",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid.002");
@@ -274,10 +277,11 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                     RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
                             .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
                             .setLightmapState(LIGHTMAP)
-                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                             .setOverlayState(OVERLAY)
-                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
-                            .createCompositeState(false);
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,true))
+                            .setOutputState(ITEM_ENTITY_TARGET)
+                            .createCompositeState(true);
 
                     model.scaleUV("Liquid.001",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid.001");
