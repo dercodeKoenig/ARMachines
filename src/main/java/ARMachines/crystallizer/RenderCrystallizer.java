@@ -1,24 +1,32 @@
 package ARMachines.crystallizer;
 
 
+import ARLib.obj.GroupObject;
 import ARLib.obj.WavefrontObject;
 import ARMachines.lathe.EntityLathe;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -64,6 +72,7 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
                     .setOverlayState(OVERLAY)
                     .setLightmapState(LIGHTMAP)
+                    .setCullState(NO_CULL)
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setTextureState(new TextureStateShard(tex, false, false))
                     .createCompositeState(false);
@@ -98,18 +107,10 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
             model.renderPart("Hull", stack, bufferSource, vertexFormat, compositeState, packedLight, packedOverlay);
 
 
-
-            VertexFormat vertexFormatTank = POSITION_COLOR_OVERLAY_LIGHT_NORMAL;
-            RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
-                    .setShaderState(POSITION_COLOR_LIGHTMAP_SHADER)
-                    .setLightmapState(LIGHTMAP)
-                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setWriteMaskState(COLOR_WRITE)
-                    .createCompositeState(false);
-
             double maxtranslate = 0.7;
 
-            if(tile.tank1.client_hasRecipe){
+
+            if (tile.tank1.client_hasRecipe) {
                 int progress = tile.tank1.client_recipeProgress;
                 int maxTime = tile.tank1.client_recipeMaxTime;
                 double maxTime_I = (double) 1 / maxTime;
@@ -119,45 +120,59 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 double relativeProgress = progress * maxTime_I + partial_add;
 
                 float fluidTranslation = 0;
-                if(relativeProgress<0.05){
-                    fluidTranslation = (float) (-1+(relativeProgress*20f));
-                }else if (relativeProgress > 0.1){
-                    fluidTranslation = (float) (-(relativeProgress-0.1)/9*10);
+                if (relativeProgress < 0.05) {
+                    fluidTranslation = (float) (-1 + (relativeProgress * 20f));
+                } else if (relativeProgress > 0.1) {
+                    fluidTranslation = (float) (-(relativeProgress - 0.1) / 9 * 10);
                 }
 
-                if(tile.tank1.client_nextConsumedStacks.fluidStacks.size() == 1){
-                    // it needs to have a fluid as input
-                    // you can make recipes without fluids but this makes no sense
+                if (tile.tank1.client_nextConsumedStacks.fluidStacks.size() == 1) {
+
+                    IClientFluidTypeExtensions extensions = IClientFluidTypeExtensions.of(tile.tank1.client_nextConsumedStacks.fluidStacks.get(0).getFluid());
+                    int color = extensions.getTintColor();
+                    ResourceLocation fluidtexture = extensions.getStillTexture();
+                    TextureAtlasSprite sprite = Minecraft.getInstance()
+                            .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                            .apply(fluidtexture);
+
+                    VertexFormat vertexFormatTank = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+                    RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setLightmapState(LIGHTMAP)
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
+                            .createCompositeState(false);
+
+                    model.scaleUV("Liquid",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid");
                     model.translateWorldSpace("Liquid", new Vector3f(0.5f, 0, 0.5f));
                     model.rotateWorldSpace("Liquid", Yaxis, angle);
                     model.translateWorldSpace("Liquid", new Vector3f(-0.5f, 0, -0.5f));
-                    model.translateWorldSpace("Liquid", new Vector3f(0f, fluidTranslation*(float)maxtranslate, -1f));
+                    model.translateWorldSpace("Liquid", new Vector3f(0f, fluidTranslation * (float) maxtranslate, -1f));
                     model.applyTransformations("Liquid");
-                    int color = IClientFluidTypeExtensions.of(tile.tank1.client_nextConsumedStacks.fluidStacks.get(0).getFluid()).getTintColor();
-                    color = color & 0xB0FFFFFF;
-                    model.renderPart("Liquid", stack, bufferSource, vertexFormatTank, compositeStateTank, packedLight, packedOverlay,color);
+                    model.renderPart("Liquid", stack, bufferSource, vertexFormatTank, compositeStateTank, packedLight, packedOverlay, color);
                 }
 
                 stack.pushPose();
 
                 stack.translate(0.5f, 0, 0.5f);
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,angle));
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis, angle));
                 stack.translate(-0.5f, 0, -0.5f);
                 stack.translate(1f, 1.4, -0.4f);
-                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis,90));
-                stack.scale(0.6f,0.6f,0.6f);
+                stack.mulPose(new Quaternionf().fromAxisAngleDeg(Yaxis, 90));
+                stack.scale(0.6f, 0.6f, 0.6f);
                 stack.scale((float) relativeProgress, (float) relativeProgress, (float) relativeProgress);
 
                 int n = 0;
-                for (ItemStack i : tile.tank1.client_nextProducedStacks.itemStacks){
-                    stack.translate(0.05*n,0.05*n,0.05*n);
-                    Minecraft.getInstance().getItemRenderer().render(i, ItemDisplayContext.NONE,false,stack,  bufferSource, packedLight, packedOverlay, Minecraft.getInstance().getItemRenderer().getModel(i,null,null,0));
-                    n+=1;
+                for (ItemStack i : tile.tank1.client_nextProducedStacks.itemStacks) {
+                    stack.translate(0.05 * n, 0.05 * n, 0.05 * n);
+                    Minecraft.getInstance().getItemRenderer().render(i, ItemDisplayContext.NONE, false, stack, bufferSource, packedLight, packedOverlay, Minecraft.getInstance().getItemRenderer().getModel(i, null, null, 0));
+                    n += 1;
                 }
 
                 stack.popPose();
             }
+
 
 
 
@@ -178,16 +193,29 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 }
 
                 if(tile.tank2.client_nextConsumedStacks.fluidStacks.size() == 1){
-                    // it needs to have a fluid as input
-                    // you can make recipes without fluids but this makes no sense
+
+                    IClientFluidTypeExtensions extensions = IClientFluidTypeExtensions.of(tile.tank2.client_nextConsumedStacks.fluidStacks.get(0).getFluid());
+                    int color = extensions.getTintColor();
+                    ResourceLocation fluidtexture = extensions.getStillTexture();
+                    TextureAtlasSprite sprite = Minecraft.getInstance()
+                            .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                            .apply(fluidtexture);
+
+                    VertexFormat vertexFormatTank = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+                    RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_CULL_SHADER)
+                            .setLightmapState(LIGHTMAP)
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
+                            .createCompositeState(false);
+
+                    model.scaleUV("Liquid.002",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid.002");
                     model.translateWorldSpace("Liquid.002", new Vector3f(0.5f, 0, 0.5f));
                     model.rotateWorldSpace("Liquid.002", Yaxis, angle);
                     model.translateWorldSpace("Liquid.002", new Vector3f(-0.5f, 0, -0.5f));
                     model.translateWorldSpace("Liquid.002", new Vector3f(0f, fluidTranslation*(float)maxtranslate, -1f));
                     model.applyTransformations("Liquid.002");
-                    int color = IClientFluidTypeExtensions.of(tile.tank2.client_nextConsumedStacks.fluidStacks.get(0).getFluid()).getTintColor();
-                    color = color & 0xB0FFFFFF;
                     model.renderPart("Liquid.002", stack, bufferSource, vertexFormatTank, compositeStateTank, packedLight, packedOverlay,color);
                 }
 
@@ -212,6 +240,8 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
             }
 
 
+
+
             if(tile.tank3.client_hasRecipe){
                 int progress = tile.tank3.client_recipeProgress;
                 int maxTime = tile.tank3.client_recipeMaxTime;
@@ -222,23 +252,40 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 double relativeProgress = progress * maxTime_I + partial_add;
 
                 float fluidTranslation = 0;
+
                 if(relativeProgress<0.05){
                     fluidTranslation = (float) (-1+(relativeProgress*20f));
                 }else if (relativeProgress > 0.1){
                     fluidTranslation = (float) (-(relativeProgress-0.1)/9*10);
                 }
 
+
+
                 if(tile.tank3.client_nextConsumedStacks.fluidStacks.size() == 1){
-                    // it needs to have a fluid as input
-                    // you can make recipes without fluids but this makes no sense
+
+                    IClientFluidTypeExtensions extensions = IClientFluidTypeExtensions.of(tile.tank3.client_nextConsumedStacks.fluidStacks.get(0).getFluid());
+                    int color = extensions.getTintColor();
+                    ResourceLocation fluidtexture = extensions.getStillTexture();
+                    TextureAtlasSprite sprite = Minecraft.getInstance()
+                            .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                            .apply(fluidtexture);
+
+                    VertexFormat vertexFormatTank = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+                    RenderType.CompositeState compositeStateTank = RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setLightmapState(LIGHTMAP)
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setOverlayState(OVERLAY)
+                            .setTextureState(new TextureStateShard(sprite.atlasLocation(),false,false))
+                            .createCompositeState(false);
+
+                    model.scaleUV("Liquid.001",sprite.getU0(),sprite.getV0(),sprite.getU1(),sprite.getV1());
                     model.resetTransformations("Liquid.001");
                     model.translateWorldSpace("Liquid.001", new Vector3f(0.5f, 0, 0.5f));
                     model.rotateWorldSpace("Liquid.001", Yaxis, angle);
                     model.translateWorldSpace("Liquid.001", new Vector3f(-0.5f, 0, -0.5f));
                     model.translateWorldSpace("Liquid.001", new Vector3f(0f, fluidTranslation*(float)maxtranslate, -1f));
                     model.applyTransformations("Liquid.001");
-                    int color = IClientFluidTypeExtensions.of(tile.tank2.client_nextConsumedStacks.fluidStacks.get(0).getFluid()).getTintColor();
-                    color = color & 0xB0FFFFFF;
                     model.renderPart("Liquid.001", stack, bufferSource, vertexFormatTank, compositeStateTank, packedLight, packedOverlay,color);
                 }
 
@@ -253,7 +300,7 @@ public class RenderCrystallizer implements BlockEntityRenderer<EntityCrystallize
                 stack.scale((float) relativeProgress, (float) relativeProgress, (float) relativeProgress);
 
                 int n = 0;
-                for (ItemStack i : tile.tank3.client_nextProducedStacks.itemStacks){
+                for (ItemStack i : tile.tank2.client_nextProducedStacks.itemStacks){
                     stack.translate(0.05*n,0.05*n,0.05*n);
                     Minecraft.getInstance().getItemRenderer().render(i, ItemDisplayContext.NONE,false,stack,  bufferSource, packedLight, packedOverlay, Minecraft.getInstance().getItemRenderer().getModel(i,null,null,0));
                     n+=1;
