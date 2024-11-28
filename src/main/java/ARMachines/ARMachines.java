@@ -5,6 +5,7 @@ import ARLib.multiblockCore.EntityMultiblockMaster;
 import ARLib.utils.MachineRecipe;
 import ARLib.utils.RecipeLoader;
 import ARMachines.crystallizer.EntityCrystallizer;
+import ARMachines.electrolyzer.EntityElectrolyzer;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.rollingMachine.EntityRollingMachine;
 import net.minecraft.client.Minecraft;
@@ -54,6 +55,7 @@ public class ARMachines {
         itemHoloProjector.registerMultiblock("Lathe", EntityLathe.structure, EntityLathe.charMapping);
         itemHoloProjector.registerMultiblock("Rolling Machine", EntityRollingMachine.structure, EntityRollingMachine.charMapping);
         itemHoloProjector.registerMultiblock("Crystallizer", EntityCrystallizer.structure, EntityCrystallizer.charMapping);
+        itemHoloProjector.registerMultiblock("Electrolyzer", EntityElectrolyzer.structure, EntityElectrolyzer.charMapping);
 
         loadRecipes();
     }

@@ -2,6 +2,7 @@ package ARMachines;
 
 import ARLib.utils.MachineRecipe;
 import ARMachines.crystallizer.EntityCrystallizer;
+import ARMachines.electrolyzer.EntityElectrolyzer;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.rollingMachine.EntityRollingMachine;
 import net.minecraft.client.Minecraft;
@@ -41,6 +42,20 @@ public class RecipeLoader {
         List<MachineRecipe> recipes =  ARLib.utils.RecipeLoader.loadRecipes(configDir,filename);
         for (MachineRecipe i : recipes) {
             EntityCrystallizer.addRecipe(i);
+        }
+    }
+
+    public static void ElectrolizerRecipes(){
+        List<MachineRecipe> DefaultRecipes = new ArrayList<>();
+
+        Path configDir = Paths.get(FMLPaths.CONFIGDIR.get().toString(), "armachines");
+        String filename = "electrolyzer.xml";
+        if (!Files.exists(configDir.resolve(filename))) {
+            ARLib.utils.RecipeLoader.createRecipeFile(configDir,filename,DefaultRecipes);
+        }
+        List<MachineRecipe> recipes =  ARLib.utils.RecipeLoader.loadRecipes(configDir,filename);
+        for (MachineRecipe i : recipes) {
+            EntityElectrolyzer.addRecipe(i);
         }
     }
     public static void LatheRecipes(){
@@ -87,8 +102,9 @@ public class RecipeLoader {
     }
 
     public static void loadRecipes(){
-        RecipeLoader.LatheRecipes();
-        RecipeLoader.rollingMachineRecipes();
-        RecipeLoader.CrystallizerRecipes();
+        LatheRecipes();
+        rollingMachineRecipes();
+        CrystallizerRecipes();
+        ElectrolizerRecipes();
     }
 }

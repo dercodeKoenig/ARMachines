@@ -58,10 +58,10 @@ public class RenderRollingMachine implements BlockEntityRenderer<EntityRollingMa
             {
                 VertexFormat vertexFormat = POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
                 RenderType.CompositeState compositeState = RenderType.CompositeState.builder()
-                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                        .setShaderState(RENDERTYPE_ENTITY_SOLID_SHADER)
                         .setOverlayState(OVERLAY)
                         .setLightmapState(LIGHTMAP)
-                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setTransparencyState(NO_TRANSPARENCY)
                         .setTextureState(new TextureStateShard(tex, false, false))
                         .createCompositeState(false);
 

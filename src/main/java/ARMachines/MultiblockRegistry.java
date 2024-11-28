@@ -4,6 +4,9 @@ package ARMachines;
 import ARMachines.crystallizer.BlockCrystallizer;
 import ARMachines.crystallizer.EntityCrystallizer;
 import ARMachines.crystallizer.RenderCrystallizer;
+import ARMachines.electrolyzer.BlockElectrolyzer;
+import ARMachines.electrolyzer.EntityElectrolyzer;
+import ARMachines.electrolyzer.RenderElectrolyzer;
 import ARMachines.lathe.BlockLathe;
 import ARMachines.lathe.EntityLathe;
 import ARMachines.lathe.RenderLathe;
@@ -62,12 +65,23 @@ public class MultiblockRegistry {
             () -> BlockEntityType.Builder.of(EntityCrystallizer::new, BLOCK_CRYSTALLIZER.get()).build(null)
     );
 
+    // electrolyzer
+    public static final DeferredHolder<Block, Block> BLOCK_ELECTROLYZER = BLOCKS.register(
+            "block_electrolyzer",
+            () -> new BlockElectrolyzer(BlockBehaviour.Properties.of())
+    );
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EntityElectrolyzer>> ENTITY_ELECTROLYZER = BLOCK_ENTITIES.register(
+            "entity_electrolyzer",
+            () -> BlockEntityType.Builder.of(EntityElectrolyzer::new, BLOCK_ELECTROLYZER.get()).build(null)
+    );
+
 
 
     public static void register(IEventBus modBus) {
         registerBlockItem("block_lathe", BLOCK_LATHE);
         registerBlockItem("block_rollingmachine", BLOCK_ROLLINGMACHINE);
         registerBlockItem("block_crystallizer", BLOCK_CRYSTALLIZER);
+        registerBlockItem("block_electrolyzer", BLOCK_ELECTROLYZER);
 
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
@@ -78,6 +92,7 @@ public class MultiblockRegistry {
         event.registerBlockEntityRenderer(ENTITY_LATHE.get(), RenderLathe::new);
         event.registerBlockEntityRenderer(ENTITY_ROLLINGMACHINE.get(), RenderRollingMachine::new);
         event.registerBlockEntityRenderer(ENTITY_CRYSTALLIZER.get(), RenderCrystallizer::new);
+        event.registerBlockEntityRenderer(ENTITY_ELECTROLYZER.get(), RenderElectrolyzer::new);
     }
 
     public static void addCreative(BuildCreativeModeTabContentsEvent e){
@@ -85,6 +100,7 @@ public class MultiblockRegistry {
             e.accept(BLOCK_LATHE.get());
             e.accept(BLOCK_ROLLINGMACHINE.get());
             e.accept(BLOCK_CRYSTALLIZER.get());
+            e.accept(BLOCK_ELECTROLYZER.get());
         }
     }
 }
